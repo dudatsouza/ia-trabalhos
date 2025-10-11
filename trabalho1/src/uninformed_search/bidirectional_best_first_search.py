@@ -18,17 +18,17 @@ def join_nodes(direction: str, meeting_child: Node, reached_other: Dict) -> Node
     # Build forward path (from initial to meeting)
     # and backward path (from goal to meeting)
     # We'll attach other (which is from opposite search) to meeting_child appropriately
-    if direction == 'F':
-        # meeting_child is in forward search; other is from backward search
-        # attach other as child of meeting_child (we need a combined node)
-        # Create a new dummy node for the join with combined cost
-        total_g = meeting_child.g + other.g
-        join = Node(state=meeting_child.state, parent=meeting_child.parent, action=meeting_child.action, g=total_g, h=0)
-        return join
-    else:
-        total_g = meeting_child.g + other.g
-        join = Node(state=meeting_child.state, parent=other.parent, action=other.action, g=total_g, h=0)
-        return join
+    total_g = meeting_child.g + other.g
+    forward_node = meeting_child
+    backward_node = other
+    if direction == 'B':
+        forward_node, backward_node = backward_node, forward_node
+
+    while backward_node.parent is not None:
+        forward_node.action = backward_node.parent
+        backward_node = backward_node.parent
+        forward_node = Node(state=backward_node.state, parent=forward_node, action=backward_node.action, g=forward_node.g + 1)
+    return forward_node
 
 
 def proceed(direction: str, problem: Problem, frontier: list, reached: dict, reached_other: dict, f_func: Callable[[Node], float]) -> Optional[Node]:
@@ -49,9 +49,9 @@ def proceed(direction: str, problem: Problem, frontier: list, reached: dict, rea
     return None
 
 
-def bidirectional_best_first_search(problem_F: Problem, f_F: Callable[[Node], float], problem_B: Problem, f_B: Callable[[Node], float]) -> Optional[Node]:
-    node_F = Node(state=problem_F.initial, g=0.0, h=problem_F.heuristic(problem_F.initial))
-    node_B = Node(state=problem_B.initial, g=0.0, h=problem_B.heuristic(problem_B.initial))
+def bidirectional_best_first_search(problem_F: Problem, f_F: Callable[[Node], float], problem_B: Problem, f_B: Callable[[Node], float]) -> Optional[Tuple[Node, int]]:
+    node_F = Node(state=problem_F.initial, g=0.0)
+    node_B = Node(state=problem_B.initial, g=0.0)
 
     frontier_F = []
     frontier_B = []
@@ -63,6 +63,8 @@ def bidirectional_best_first_search(problem_F: Problem, f_F: Callable[[Node], fl
 
     solution = None
 
+    expanded_nodes = 0
+
     while frontier_F and frontier_B:
         topF = frontier_F[0][0]
         topB = frontier_B[0][0]
@@ -71,7 +73,8 @@ def bidirectional_best_first_search(problem_F: Problem, f_F: Callable[[Node], fl
         else:
             solution = proceed('B', problem_B, frontier_B, reached_B, reached_F, f_B)
 
+        expanded_nodes += 1
         if solution is not None:
-            return solution
+            return solution, expanded_nodes
 
     return None

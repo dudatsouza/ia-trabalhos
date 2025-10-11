@@ -52,6 +52,7 @@ def main():
 
     from maze_problem import MazeProblem
     from uninformed_search.djikstra import djikstra
+    from uninformed_search.bidirectional_best_first_search import bidirectional_best_first_search
     from best_first_search import reconstruct_path
 
     matrix = read_matrix_from_file(os.path.join(script_dir, '..', 'data', 'input', 'maze.txt'))
@@ -86,6 +87,28 @@ def main():
 
                 elif sub_option == 2:
                     print("Bidirectional Best-First Search selected.")
+                    # Problem 1 is Forward and Problem 2 is Backward
+                    # Change char "S" to "G" and "G" to "S" in matrix
+                    matrix_2 = [row[:] for row in matrix]  # Deep copy of the matrix
+                    for r in range(len(matrix_2)):
+                        for c in range(len(matrix_2[0])):
+                            if matrix_2[r][c] == 'S':
+                                matrix_2[r][c] = 'G'
+                            elif matrix_2[r][c] == 'G':
+                                matrix_2[r][c] = 'S'
+                    mz_2 = Maze(matrix_2)
+                    problem_2 = MazeProblem(mz_2)
+                    result = bidirectional_best_first_search(problem_F=problem, f_F=lambda n: n.g, problem_B=problem_2, f_B=lambda n: n.g)
+                    if result is None:
+                        print("No path found")
+                        continue
+
+                    solution, nodes_expanded = result
+
+                    if solution:
+                        path = reconstruct_path(solution)
+                        print("Path:", path)
+                        print("Number of nodes expanded:", nodes_expanded)
 
                 elif sub_option == 3:
                     print("Comparison of Dijkstra and Bidirectional Best-First Search selected.")
