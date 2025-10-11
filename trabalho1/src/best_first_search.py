@@ -1,18 +1,21 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 from problem import Problem
 from node import Node
 import heapq
 
-def best_first_search(problem: Problem, f: Callable[[Node], float]) -> Optional[Node]:
+def best_first_search(problem: Problem, f: Callable[[Node], float]) -> Optional[Tuple[Node, int]]:
     start = Node(state=problem.initial, g=0.0, h=problem.heuristic(problem.initial))
     frontier = []
     heapq.heappush(frontier, (f(start), start))
     reached = {start.state: start}
+    nodes_expanded = 0
 
     while frontier:
         _, node = heapq.heappop(frontier)
         if problem.is_goal(node.state):
-            return node
+            return node, nodes_expanded
+
+        nodes_expanded += 1
         for child in expand(problem, node):
             existing = reached.get(child.state)
             if existing is None or child.g < existing.g:
