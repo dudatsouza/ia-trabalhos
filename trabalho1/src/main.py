@@ -12,7 +12,8 @@ def show_uninformed_menu():
     print("1. Dijkstra")
     print("2. Bidirectional Best-First Search")
     print("3. Comparison of Both")
-    print("4. Back to Main Menu")
+    print("4. Visualize Bidirectional Best-First Search")
+    print("5. Back to Main Menu")
 
 def show_informed_menu():
     print("Informed Search Options:")
@@ -28,11 +29,22 @@ def show_heuristic_menu(algorithm: str):
     print("2. Euclidean Distance")
     print("3. Back to Previous Menu")
 
+
+def _collect_tree_nodes(snapshots):
+    nodes = set()
+    for snap in snapshots:
+        if snap.get('reached'):
+            nodes.update(tuple(state) for state in snap['reached'].keys())
+        for key in ('reached_F', 'reached_B'):
+            if key in snap:
+                nodes.update(tuple(state) for state in snap[key])
+    return nodes
+
 def get_option():
     while True:
         try:
-            option = int(input("Choose an option (1-4): "))
-            if option in [1, 2, 3, 4]:
+            option = int(input("Choose an option (1-5): "))
+            if option in [1, 2, 3, 4, 5]:
                 return option
             else:
                 print("Invalid option. Please try again.")
@@ -113,8 +125,62 @@ def main():
                 elif sub_option == 3:
                     print("Comparison of Dijkstra and Bidirectional Best-First Search selected.")
 
-
                 elif sub_option == 4:
+                    # Visualize bidirectional search
+                    print("Visualizing Bidirectional Best-First Search...")
+                    # Prepare backward problem by swapping S and G
+                    matrix_2 = [row[:] for row in matrix]
+                    for r in range(len(matrix_2)):
+                        for c in range(len(matrix_2[0])):
+                            if matrix_2[r][c] == 'S':
+                                matrix_2[r][c] = 'G'
+                            elif matrix_2[r][c] == 'G':
+                                matrix_2[r][c] = 'S'
+                    mz_2 = Maze(matrix_2)
+                    problem_2 = MazeProblem(mz_2)
+
+                    # Collect snapshots emitted by the search
+                    import visualize_matrix
+
+                    snapshots = []
+
+                    def on_step(snapshot):
+                        # Keep the bidirectional snapshot structure (visualizer understands these keys)
+                        snapshots.append(snapshot.copy())
+
+                    # Run the bidirectional search with the callback to collect snapshots
+                    result = bidirectional_best_first_search(problem_F=problem, f_F=lambda n: n.g, problem_B=problem_2, f_B=lambda n: n.g, on_step=on_step)
+                    if result is None:
+                        print('No path found')
+                    else:
+                        solution, nodes_expanded = result
+                        if snapshots:
+                            interval_str = input('Frame interval in ms (press Enter for 100, higher = slower): ').strip()
+                            try:
+                                interval_ms = int(interval_str) if interval_str else 100
+                                if interval_ms <= 0:
+                                    raise ValueError
+                            except ValueError:
+                                print('Invalid interval, using 100ms.')
+                                interval_ms = 100
+                            # Pass the collected snapshots directly to the visualizer (no re-run)
+                            out_path = os.path.join(script_dir, '..', 'tes.gif')
+                            print(f'Saving visualization to {out_path}')
+                            visualize_matrix.visualize(
+                                os.path.join(script_dir, '..', 'data', 'input', 'maze.txt'),
+                                f=lambda n: n.g,
+                                interval=interval_ms,
+                                precompute=True,
+                                precomputed_snapshots=snapshots,
+                                final_path=reconstruct_path(solution) if solution else None,
+                                tree_nodes=_collect_tree_nodes(snapshots),
+                                final_hold_ms=5000,
+                                out_file=out_path,
+                            )
+                        else:
+                            print('No snapshots were produced for visualization.')
+
+                elif sub_option == 5:
                     break
             
         elif option == 2:
