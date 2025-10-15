@@ -56,7 +56,9 @@ def main():
     # Import maze utilities (module name uses underscore)
     from maze_generator import read_matrix_from_file, generate_graph_from_matrix
     from maze_representation import Maze
+    from measure_time_memory import measure_time_memory
     import os
+    
 
     # Compute the path to the maze file relative to this script's location
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -85,7 +87,9 @@ def main():
                 if sub_option == 1:
                     print("Dijkstra selected.")
                     # If not found, returns None
-                    result = djikstra(problem)
+
+                    result, elapsed_time, memory_used, current, peak = measure_time_memory(djikstra, problem)
+
                     if result is None:
                         print("No path found")
                         continue
@@ -96,21 +100,29 @@ def main():
                         path = reconstruct_path(goal_node)
                         print("Path:", path)
                         print("Number of nodes expanded:", nodes_expanded)
+                        print(f"Time taken: {elapsed_time:.3f} milliseconds")
+                        print(f"Memory used: {memory_used:.12f} B")
+                        print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
                 elif sub_option == 2:
                     print("Bidirectional Best-First Search selected.")
                     # Problem 1 is Forward and Problem 2 is Backward
                     # Change char "S" to "G" and "G" to "S" in matrix
-                    matrix_2 = [row[:] for row in matrix]  # Deep copy of the matrix
-                    for r in range(len(matrix_2)):
-                        for c in range(len(matrix_2[0])):
-                            if matrix_2[r][c] == 'S':
-                                matrix_2[r][c] = 'G'
-                            elif matrix_2[r][c] == 'G':
-                                matrix_2[r][c] = 'S'
-                    mz_2 = Maze(matrix_2)
-                    problem_2 = MazeProblem(mz_2)
-                    result = bidirectional_best_first_search(problem_F=problem, f_F=lambda n: n.g, problem_B=problem_2, f_B=lambda n: n.g)
+                    
+                    def bid_bfs():
+                        matrix_2 = [row[:] for row in matrix]  
+                        for r in range(len(matrix_2)):
+                            for c in range(len(matrix_2[0])):
+                                if matrix_2[r][c] == 'S':
+                                    matrix_2[r][c] = 'G'
+                                elif matrix_2[r][c] == 'G':
+                                    matrix_2[r][c] = 'S'
+                        mz_2 = Maze(matrix_2)
+                        problem_2 = MazeProblem(mz_2)
+                        return bidirectional_best_first_search(problem_F=problem, f_F=lambda n: n.g, problem_B=problem_2, f_B=lambda n: n.g)
+
+                    result, elapsed_time, memory_used, current, peak = measure_time_memory(bid_bfs)
+                    
                     if result is None:
                         print("No path found")
                         continue
@@ -121,6 +133,9 @@ def main():
                         path = reconstruct_path(solution)
                         print("Path:", path)
                         print("Number of nodes expanded:", nodes_expanded)
+                        print(f"Time taken: {elapsed_time:.3f} milliseconds")
+                        print(f"Memory used: {memory_used:.12f} B")
+                        print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
                 elif sub_option == 3:
                     print("Comparison of Dijkstra and Bidirectional Best-First Search selected.")
