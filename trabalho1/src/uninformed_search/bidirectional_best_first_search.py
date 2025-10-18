@@ -28,6 +28,8 @@ def join_nodes(direction: str, meeting_child: Node, reached_other: Dict) -> Node
         forward_node.action = backward_node.parent
         backward_node = backward_node.parent
         forward_node = Node(state=backward_node.state, parent=forward_node, action=backward_node.action, g=forward_node.g + 1)
+    # set full path-cost on the returned node for callers
+    forward_node.g = total_g
     return forward_node
 
 

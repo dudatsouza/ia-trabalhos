@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Callable
 from problem import Problem
 from maze_representation import Maze
 
@@ -30,6 +30,8 @@ class MazeProblem(Problem):
     def action_cost(self, s: Coord, a: Coord, s2: Coord) -> float:
         return self.maze.step_cost(s, a, s2)
 
-    def heuristic(self, s: Coord) -> float:
-        # default heuristic: Manhattan distance to goal
-        return abs(s[0] - self.goal[0]) + abs(s[1] - self.goal[1])
+    def heuristic(self, s: Coord, function_h: Optional[Callable[[Coord], float]] = None) -> float:
+        if function_h:
+            return function_h(s)
+            
+        return 0

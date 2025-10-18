@@ -115,7 +115,7 @@ def snapshot_to_array(
                 arr[r, c] = value
 
     if 'frontier' in snapshot and snapshot['frontier']:
-        for state, _priority in snapshot['frontier']:
+        for state in snapshot['frontier']:
             r, c = state
             if can_paint(r, c):
                 arr[r, c] = 6
@@ -334,7 +334,7 @@ def visualize(
         computed_tree: set[Tuple[int, int]] = set()
         for snap in snapshots:
             if snap.get('reached'):
-                computed_tree.update(snap['reached'].keys())
+                computed_tree.update(snap['reached'])
             for key in ('reached_F', 'reached_B'):
                 if key in snap:
                     computed_tree.update(tuple(state) for state in snap[key])
