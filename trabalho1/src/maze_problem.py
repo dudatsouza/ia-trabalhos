@@ -30,8 +30,8 @@ class MazeProblem(Problem):
     def action_cost(self, s: Coord, a: Coord, s2: Coord) -> float:
         return self.maze.step_cost(s, a, s2)
 
-    def heuristic(self, s: Coord, function_h: Optional[Callable[[Coord], float]] = None) -> float:
+    def heuristic(self, s: Coord, o: Coord, function_h: Optional[Callable[[Coord, Coord], float]] = None) -> float:
         if function_h:
-            return function_h(s)
-            
+            return function_h(s, o)
+
         return 0

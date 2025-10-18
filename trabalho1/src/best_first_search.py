@@ -4,7 +4,7 @@ from node import Node
 import heapq
 
 def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Callable[[dict], None] | None = None) -> Optional[Tuple[Node, int]]:
-    start = Node(state=problem.initial, g=0.0, h=problem.heuristic(problem.initial))
+    start = Node(state=problem.initial, g=0.0, h=problem.heuristic(problem.initial, problem.goal))
     frontier = []
     heapq.heappush(frontier, (f(start), start))
     reached = {start.state: start}
@@ -31,6 +31,7 @@ def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Cal
             if existing is None or child.g < existing.g:
                 reached[child.state] = child
                 heapq.heappush(frontier, (f(child), child))
+                nodes_expanded += 1
 
                 # emit snapshot when pushing a child
                 if on_step:
@@ -42,14 +43,13 @@ def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Cal
                         'nodes_expanded': nodes_expanded,
                     }
                     on_step(snapshot)
-        nodes_expanded += 1
     return None
 
 def expand(problem: Problem, node: Node):
     for action in problem.actions(node.state):
         s2 = problem.result(node.state, action)
         cost = node.g + problem.action_cost(node.state, action, s2)
-        child = Node(state=s2, parent=node, action=action, g=cost, h=problem.heuristic(s2))
+        child = Node(state=s2, parent=node, action=action, g=cost, h=problem.heuristic(s2, problem.goal))
         yield child
 
 def reconstruct_path(node: Node):

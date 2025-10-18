@@ -4,7 +4,40 @@ import heapq
 from problem import Problem
 from node import Node
 from best_first_search import expand
+from measure_time_memory import measure_time_memory
+from maze_problem import MazeProblem
+from maze_representation import Maze
+from best_first_search import reconstruct_path
 
+def compute_bidirectional_best_first_search(problem: Problem, matrix):
+    def bid_bfs():
+        matrix_2 = [row[:] for row in matrix]  
+        for r in range(len(matrix_2)):
+            for c in range(len(matrix_2[0])):
+                if matrix_2[r][c] == 'S':
+                    matrix_2[r][c] = 'G'
+                elif matrix_2[r][c] == 'G':
+                    matrix_2[r][c] = 'S'
+        mz_2 = Maze(matrix_2)
+        problem_2 = MazeProblem(mz_2)
+        return bidirectional_best_first_search(problem_F=problem, f_F=lambda n: n.g, problem_B=problem_2, f_B=lambda n: n.g)
+
+    result, elapsed_time, memory_used, current, peak = measure_time_memory(bid_bfs)
+    
+    if result is None:
+        print("No path found")
+        return
+
+    solution, nodes_expanded = result
+
+    if solution:
+        path = reconstruct_path(solution)
+        print("Path:", path)
+        print("Number of nodes expanded:", nodes_expanded)
+        print("Cost of path:", solution.g)
+        print(f"Time taken: {elapsed_time:.3f} milliseconds")
+        print(f"Memory used: {memory_used:.12f} B")
+        print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
 def join_nodes(direction: str, meeting_child: Node, reached_other: Dict) -> Node:
     """Reconstruct a solution Node combining forward and backward paths.
@@ -80,6 +113,7 @@ def proceed(
         if existing is None or child.g < existing.g:
             reached[s] = child
             heapq.heappush(frontier, (f_func(child), child))
+            expanded_nodes += 1
             # emit snapshot when pushing a child
             if on_step:
                 dir_label = 'Forward' if direction == 'F' else 'Backward'
@@ -110,8 +144,8 @@ def proceed(
             if s in reached_other:
                 # found a meeting point
                 solution = join_nodes(direction, child, reached_other)
-                return solution
-    return None
+                return solution, expanded_nodes
+    return None, expanded_nodes
 
 
 def bidirectional_best_first_search(problem_F: Problem, f_F: Callable[[Node], float], problem_B: Problem, f_B: Callable[[Node], float], on_step: Callable[[dict], None] | None = None) -> Optional[Tuple[Node, int]]:
@@ -134,11 +168,12 @@ def bidirectional_best_first_search(problem_F: Problem, f_F: Callable[[Node], fl
         topF = frontier_F[0][0]
         topB = frontier_B[0][0]
         if topF < topB:
-            solution = proceed('F', problem_F, frontier_F, reached_F, reached_B, f_F, expanded_nodes, on_step=on_step)
+            # reference to expanded_nodes, to be incremented inside proceed
+            solution, expanded_nodes = proceed('F', problem_F, frontier_F, reached_F, reached_B, f_F, expanded_nodes, on_step=on_step)
         else:
-            solution = proceed('B', problem_B, frontier_B, reached_B, reached_F, f_B, expanded_nodes, on_step=on_step)
+            # reference to expanded_nodes, to be incremented inside proceed
+            solution, expanded_nodes = proceed('B', problem_B, frontier_B, reached_B, reached_F, f_B, expanded_nodes, on_step=on_step)
 
-        expanded_nodes += 1
         if solution is not None:
             return solution, expanded_nodes
 

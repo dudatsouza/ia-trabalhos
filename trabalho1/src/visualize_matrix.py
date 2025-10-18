@@ -264,7 +264,7 @@ def _save_gif_from_arrays(
 def visualize(
     maze_file: str,
     f: Callable[[Node], float],
-    interval: int = 200,
+    interval: int = 100,
     out_file: str | None = None,
     max_steps: int | None = None,
     precompute: bool = False,
