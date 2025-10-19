@@ -44,9 +44,9 @@ def get_option(max_option: int = 5) -> int:
 # Main Function
 def main():
     # Import maze utilities (module name uses underscore)
-    from maze_generator import read_matrix_from_file, generate_graph_from_matrix
-    from maze_representation import Maze
-    from measure_time_memory import measure_time_memory
+    from core.maze_generator import read_matrix_from_file, generate_graph_from_matrix
+    from core.maze_representation import Maze
+    from search.measure_time_memory import measure_time_memory
     import os
     
 
@@ -54,13 +54,13 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     maze_path = os.path.join(script_dir, "..", "data", "input", "maze.txt")
 
-    from maze_problem import MazeProblem
-    from uninformed_search.dijkstra import compute_dijkstra, dijkstra
-    from uninformed_search.bidirectional_best_first_search import bidirectional_best_first_search, compute_bidirectional_best_first_search
-    from best_first_search import reconstruct_path
+    from core.maze_problem import MazeProblem
+    from uninformed.dijkstra import compute_dijkstra, dijkstra
+    from uninformed.bidirectional_best_first_search import bidirectional_best_first_search, compute_bidirectional_best_first_search
+    from search.best_first_search import reconstruct_path
 
-    # from informed_search.a_star_search import compute_a_star_search
-    from informed_search.greedy_best_first_search import compute_greedy_best_first_search
+    # from informed.a_star_search import compute_a_star_search
+    from informed.greedy_best_first_search import compute_greedy_best_first_search
 
     matrix = read_matrix_from_file(os.path.join(script_dir, '..', 'data', 'input', 'maze.txt'))
     # Use Maze representation as primary
@@ -87,13 +87,13 @@ def main():
 
                 elif sub_option == 3:
                     print("Comparison of Dijkstra and Bidirectional Best-First Search selected.")
-                    import uninformed_search.uninformed_comparison as uc
+                    import uninformed.uninformed_comparison as uc
                     uc.compare_uninformed_search_algorithms(matrix)
 
                 elif sub_option == 4:
                     # Visualize Bidirectional Best-First Search
                     print("Visualizing Bidirectional Best-First Search...")
-                    from uninformed_search.generate_gifs_uninformed import generate_gifs_uninformed
+                    from uninformed.generate_gifs_uninformed import generate_gifs_uninformed
                     generate_gifs_uninformed(problem, matrix)
 
                 elif sub_option == 5:
@@ -173,7 +173,7 @@ def main():
                         else:
                             print("Invalid option. Please try again.")
                             continue
-                    import informed_search.informed_comparison as ic
+                    import informed.informed_comparison as ic
                     ic.compare_informed_search_algorithms(problem, heuristic_a_star, heuristic_greedy)
 
                 elif sub_option == 4:
@@ -181,7 +181,7 @@ def main():
                 elif sub_option == 5:
                     print("Visualization of Informed Searches selected.")
                     # Call the function to generate GIFs for informed searches
-                    from informed_search.generate_gifs_informed import generate_gifs_informed
+                    from informed.generate_gifs_informed import generate_gifs_informed
                     while True:
                         show_heuristic_menu("Greedy Best-First Search")
                         heuristic_option = get_option(3)

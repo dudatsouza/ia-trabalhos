@@ -85,9 +85,9 @@ Para instalar o projeto, siga os passos abaixo:
 - `statsmodels` -->
 
 3. Execute o comando abaixo para roda o programa:
-<!-- ```console
-python3 src/main.py
-``` -->
+```console
+  PYTHONPATH='src' python3 -m tools.run_gui
+```
 
 </div>
 

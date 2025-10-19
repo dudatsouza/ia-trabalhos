@@ -1,12 +1,12 @@
 from typing import Callable
 import os
-from maze_generator import read_matrix_from_file
-from maze_representation import Maze
-from maze_problem import MazeProblem
-from uninformed_search.bidirectional_best_first_search import bidirectional_best_first_search
-from uninformed_search.dijkstra import dijkstra
-from best_first_search import reconstruct_path
-from problem import Problem
+from ..core.maze_generator import read_matrix_from_file
+from ..core.maze_representation import Maze
+from ..core.maze_problem import MazeProblem
+from .bidirectional_best_first_search import bidirectional_best_first_search
+from .dijkstra import dijkstra
+from ..search.best_first_search import reconstruct_path
+from ..core.problem import Problem
 
 def _collect_tree_nodes(snapshots):
     nodes = set()
@@ -33,7 +33,7 @@ def generate_gifs_uninformed(problem: Problem, matrix):
     problem_2 = MazeProblem(mz_2)
 
     # Collect snapshots emitted by the search
-    import visualize_matrix
+    from ..search import visualize_matrix
 
     snapshots = []
 

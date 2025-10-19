@@ -1,8 +1,8 @@
-from heuristics import h_manhattan_distance, h_euclidean_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance
 from typing import Optional, Tuple, Callable
-from problem import Problem
-from node import Node
-from measure_time_memory import measure_time_memory
+from core.problem import Problem
+from core.node import Node
+from search.measure_time_memory import measure_time_memory
 import heapq
 
 def compute_greedy_best_first_search(problem: Problem, heuristic: str):
@@ -78,7 +78,7 @@ def greedy_best_first_search(problem: Problem, f: Callable[[Node], float], heuri
 def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
     for action in problem.actions(node.state):
         s2 = problem.result(node.state, action)
-        cost = heuristic_table_coordinate[s2] + heuristic_table_coordinate[node.state]
+        cost = heuristic_table_coordinate[s2]
         child = Node(state=s2, parent=node, action=action, h=cost, f=cost)
         yield child
 

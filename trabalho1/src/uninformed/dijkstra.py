@@ -1,9 +1,8 @@
 from typing import Optional, Tuple, Callable
-from problem import Problem
-from node import Node
-from best_first_search import best_first_search
-from measure_time_memory import measure_time_memory
-from best_first_search import reconstruct_path
+from core.problem import Problem
+from core.node import Node
+from search.best_first_search import best_first_search, reconstruct_path
+from search.measure_time_memory import measure_time_memory
 
 def compute_dijkstra(problem: Problem):
     result, elapsed_time, memory_used, current, peak = measure_time_memory(dijkstra, problem)

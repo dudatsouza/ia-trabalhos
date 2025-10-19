@@ -1,6 +1,6 @@
 from typing import Tuple, Optional, Callable
-from problem import Problem
-from maze_representation import Maze
+from core.problem import Problem
+from core.maze_representation import Maze
 
 Coord = Tuple[int, int]
 
@@ -24,14 +24,12 @@ class MazeProblem(Problem):
         return self.maze.actions(state)
 
     def result(self, state: Coord, action: Coord) -> Coord:
-        # In our Maze representation an action is a direction; use maze.result
         return self.maze.result(state, action)
 
     def action_cost(self, s: Coord, a: Coord, s2: Coord) -> float:
         return self.maze.step_cost(s, a, s2)
 
-    def heuristic(self, s: Coord, o: Coord, function_h: Optional[Callable[[Coord, Coord], float]] = None) -> float:
-        if function_h:
-            return function_h(s, o)
-
-        return 0
+    def heuristic(self, s: Coord, goal: Optional[Coord] = None, function_h: Optional[Callable[[Coord, Coord], float]] = None) -> float:
+        if function_h and goal is not None:
+            return function_h(s, goal)
+        return 0.0

@@ -1,6 +1,6 @@
 from typing import Callable, Optional, Tuple
-from problem import Problem
-from node import Node
+from core.problem import Problem
+from core.node import Node
 import heapq
 
 def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Callable[[dict], None] | None = None) -> Optional[Tuple[Node, int]]:

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Callable, Dict, Any, List, Tuple, Iterable
 import heapq
 import os
+import threading
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,10 +12,10 @@ from matplotlib import animation
 from matplotlib.colors import ListedColormap
 import matplotlib.patches as mpatches
 
-from maze_representation import Maze
-from maze_generator import read_matrix_from_file
-from maze_problem import MazeProblem
-from node import Node
+from core.maze_representation import Maze
+from core.maze_generator import read_matrix_from_file
+from core.maze_problem import MazeProblem
+from core.node import Node
 
 Snapshot = Dict[str, Any]
 
@@ -98,13 +99,57 @@ def snapshot_to_array(
                 arr[r, c] = 1
 
     def can_paint(row: int, col: int) -> bool:
+        # Safe check: ensure indices are ints and within grid bounds
+        if not (isinstance(row, int) and isinstance(col, int)):
+            return False
+        if not (0 <= row < len(base_grid) and 0 <= col < len(base_grid[0])):
+            return False
         if allow_override_start_goal:
             return True
         return base_grid[row][col] not in ('S', 'G')
 
+    def _coerce_state(state) -> tuple | None:
+        """Try to convert various possible state representations to (r, c).
+
+        Accepts:
+        - (r, c) tuples or [r, c] lists
+        - ((r, c), priority) frontier entries
+        - numpy arrays with shape (2,)
+        Returns None for unsupported values.
+        """
+        # If it's a pair (state, priority) produced by some generators
+        if isinstance(state, (list, tuple)) and len(state) == 2:
+            a, b = state
+            # If first element looks like a coord (tuple/list of length 2), use it
+            if isinstance(a, (list, tuple)) and len(a) >= 2 and isinstance(a[0], (int,)):
+                try:
+                    return int(a[0]), int(a[1])
+                except Exception:
+                    return None
+            # Otherwise, if both are ints, treat as (r,c)
+            if isinstance(a, int) and isinstance(b, int):
+                return int(a), int(b)
+        # Numpy array-like
+        try:
+            import numpy as _np
+
+            if isinstance(state, _np.ndarray) and state.size >= 2:
+                return int(state[0]), int(state[1])
+        except Exception:
+            pass
+        # Plain tuple/list coordinates
+        if isinstance(state, (list, tuple)) and len(state) >= 2:
+            r, c = state[0], state[1]
+            if isinstance(r, int) and isinstance(c, int):
+                return r, c
+        return None
+
     if 'reached' in snapshot and snapshot['reached']:
         for state in snapshot['reached']:
-            r, c = state
+            coord = _coerce_state(state)
+            if coord is None:
+                continue
+            r, c = coord
             if can_paint(r, c):
                 arr[r, c] = 4
 
@@ -116,7 +161,10 @@ def snapshot_to_array(
 
     if 'frontier' in snapshot and snapshot['frontier']:
         for state in snapshot['frontier']:
-            r, c = state
+            coord = _coerce_state(state)
+            if coord is None:
+                continue
+            r, c = coord
             if can_paint(r, c):
                 arr[r, c] = 6
 
@@ -175,6 +223,7 @@ def _save_gif_from_arrays(
     except ImportError:
         return False
 
+    from core.heuristics import h_manhattan_distance, h_euclidean_distance
     palette_rgb: List[int] = []
     for color in PALETTE:
         palette_rgb.extend(int(color[i:i + 2], 16) for i in (1, 3, 5))
@@ -311,7 +360,34 @@ def visualize(
             print('No frames produced by the search.')
             return
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    # If we're saving to a file or running off the main thread, avoid creating
+    # a GUI window (TkAgg). Use a non-interactive Figure + FigureCanvasAgg so
+    # no Tk windows are created and matplotlib won't attempt to destroy them
+    # from a background thread at process exit.
+    use_agg_canvas = False
+    try:
+        has_display = os.environ.get('DISPLAY') and plt.get_backend().lower() not in ('agg',)
+    except Exception:
+        has_display = False
+    if out_file is not None or threading.current_thread() is not threading.main_thread():
+        use_agg_canvas = True
+
+    if use_agg_canvas:
+        # Create a Figure that does not use the interactive pyplot backend
+        from matplotlib.figure import Figure
+        try:
+            from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        except Exception:
+            FigureCanvas = None  # fallback; plt.subplots will still work below
+
+        if FigureCanvas is not None:
+            fig = Figure(figsize=(8, 6))
+            canvas = FigureCanvas(fig)
+            ax = fig.add_subplot(111)
+        else:
+            fig, ax = plt.subplots(figsize=(8, 6))
+    else:
+        fig, ax = plt.subplots(figsize=(8, 6))
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_title('Search visualization')

@@ -1,13 +1,13 @@
 from typing import Callable, Optional, Tuple, Dict
 import heapq
 
-from problem import Problem
-from node import Node
-from best_first_search import expand
-from measure_time_memory import measure_time_memory
-from maze_problem import MazeProblem
-from maze_representation import Maze
-from best_first_search import reconstruct_path
+from core.problem import Problem
+from core.node import Node
+from search.best_first_search import expand, reconstruct_path
+from search.measure_time_memory import measure_time_memory
+from core.maze_problem import MazeProblem
+from core.maze_representation import Maze
+
 
 def compute_bidirectional_best_first_search(problem: Problem, matrix):
     def bid_bfs():

@@ -5,11 +5,9 @@ Pos = Tuple[int, int]
 
 
 class Maze:
-    """Representa o espaço de estados para o problema do labirinto.
+    """Representa o espao de estados para o problema do labirinto.
 
-    Convenções:
-     - 'S' = início, 'G' = objetivo, '#' = parede, '.' = célula livre.
-     - Ações: mover para N, S, O, L (4-direções). Expandir para 8-direções se desejado.
+    Conven
     """
 
     def __init__(self, grid: Grid):
@@ -24,7 +22,7 @@ class Maze:
             for c in range(self.W):
                 if self.grid[r][c] == ch:
                     return (r, c)
-        raise ValueError(f"Caractere '{ch}' não encontrado no grid")
+        raise ValueError(f"Caractere '{ch}' no encontrado no grid")
 
     def in_bounds(self, p: Pos) -> bool:
         r, c = p
@@ -35,7 +33,7 @@ class Maze:
         return self.grid[r][c] != '#'
 
     def actions(self, p: Pos):
-        """Retorna a lista de ações válidas em p. Ex.: ['N','S','O','L']"""
+        """Retorna a lista de ade validat in p. Ex.: ['N','S','O','L']"""
         acts = []
         r, c = p
         candidates = {
@@ -51,17 +49,17 @@ class Maze:
         return acts
 
     def result(self, p: Pos, a: str) -> Pos:
-        """Função de transição T(p,a)."""
+        """Funde transi T(p,a)."""
         r, c = p
         delta = {'N':(-1,0), 'S':(1,0), 'O':(0,-1), 'L':(0,1)}
         dr, dc = delta[a]
         q = (r+dr, c+dc)
         if not (self.in_bounds(q) and self.passable(q)):
-            raise ValueError('Ação inválida em p')
+            raise ValueError('A invalida em p')
         return q
 
     def step_cost(self, p: Pos, a: str, q: Pos) -> float:
-        """Custo de passo. Por padrão, custo unitário."""
+        """Custo de passo. Por padr, custo unit."""
         return 1.0
 
     def goal_test(self, p: Pos) -> bool:
@@ -94,4 +92,3 @@ class Maze:
     def pretty_print(self):
         for row in self.grid:
             print(''.join(row))
-
