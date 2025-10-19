@@ -2,7 +2,16 @@ import os
 import threading
 import sys
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox, filedialog, Toplevel
+import networkx as nx
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import statistics
+import traceback
+from pathlib import Path
+import os
+import tempfile 
+import sys
 
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, src_path)
@@ -14,14 +23,23 @@ try:
     from core.maze_generator import read_matrix_from_file
     from core.maze_representation import Maze
     from core.maze_problem import MazeProblem
+    from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
     from search.measure_time_memory import measure_time_memory
     from uninformed.dijkstra import dijkstra
     from uninformed.bidirectional_best_first_search import bidirectional_best_first_search
+    from uninformed.generate_gifs_uninformed import generate_gifs_uninformed
+    from uninformed.uninformed_comparison import compare_uninformed_search_algorithms
+    from informed.a_star_search import a_star_search
+    from informed.greedy_best_first_search import greedy_best_first_search
+    from informed.generate_gifs_informed import generate_gifs_informed
+    from informed.informed_comparison import compare_informed_search_algorithms
     from search.best_first_search import reconstruct_path
     import search.visualize_matrix as visualize_matrix
 except Exception as e:
     print("Warning: imports failed in run_gui.py:", e)
 
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, src_path)
 
 class App(tk.Tk):
     def __init__(self):
@@ -182,8 +200,7 @@ class App(tk.Tk):
         greedy_state = ' (missing)' if not self.has_greedy else ''
         ttk.Button(w, text=f"A* Search{a_star_state}", command=lambda: [w.destroy(), self.open_heuristic_window('A*')]).pack(fill=tk.X, padx=8, pady=4)
         ttk.Button(w, text=f"Greedy Best-First Search{greedy_state}", command=lambda: [w.destroy(), self.open_heuristic_window('Greedy')]).pack(fill=tk.X, padx=8, pady=4)
-        ttk.Button(w, text="Comparison of A* and Greedy", command=lambda: [w.destroy(), self.run_comparison_informed()]).pack(fill=tk.X, padx=8, pady=4)
-        ttk.Button(w, text="Comparison of Heuristics", command=lambda: [w.destroy(), self.run_heuristics_comparison()]).pack(fill=tk.X, padx=8, pady=4)
+        ttk.Button(w, text="Comparison of Both", command=lambda: [w.destroy(), self.run_comparison_informed()]).pack(fill=tk.X, padx=8, pady=4)
         # When the user requests to visualize informed searches, first auto-save
         # all 4 GIFs in background (A*/Greedy × Manhattan/Euclidean/Octile/Chebyshev), then open
         # the visualize window for canvas playback. This keeps the UI simple: the
@@ -206,10 +223,6 @@ class App(tk.Tk):
         ttk.Button(w, text="Back", command=w.destroy).pack(fill=tk.X, padx=8, pady=6)
 
     def open_graph_window(self):
-        import networkx as nx
-        import matplotlib.pyplot as plt
-        from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
         if not hasattr(self, 'maze') or not self.maze:
             messagebox.showerror("Error", "Load a maze first!")
             return
@@ -292,93 +305,73 @@ class App(tk.Tk):
         return nodes
     
     # --- Comparison and informed stubs ---
+    
+    # --- Comparison and informed stubs ---
     def run_comparison_uninformed(self):
-        # Run Dijkstra and Bidirectional multiple times and show averages
+        # Executa a comparação usando a função importada
         if not self.problem:
             messagebox.showwarning("No maze", "Load a maze first")
             return
+        if not self.matrix:
+            messagebox.showwarning("No maze", "Load a maze first")
+            return
+            
         self.safe_write_output("Running comparison (15 runs each)...\n")
 
         def worker():
-            import statistics
-            d_times = []
-            b_times = []
-            d_nodes = []
-            b_nodes = []
-            d_found = 0
-            b_found = 0
-            for _ in range(15):
-                try:
-                    res_d, t_d, m_d, c_d, p_d = measure_time_memory(dijkstra, self.problem)
-                except Exception:
-                    continue
-                if res_d is not None:
-                    sol, ne = res_d
-                    d_found += 1
-                    d_times.append(t_d)
-                    d_nodes.append(ne)
+            # 2. Executar a função (ela faz o loop de 15 execuções)
+            try:
+                metrics = compare_uninformed_search_algorithms(self.matrix)
+            except Exception as e:
+                self.safe_write_output(f"Erro ao executar a comparação: {e}\n")
+                return
 
-                def bid_call():
-                    # create swapped problem fresh inside the thread
-                    prob2 = self._create_swapped_problem()
-                    return bidirectional_best_first_search(problem_F=self.problem, f_F=lambda n: n.g, problem_B=prob2, f_B=lambda n: n.g)
-
-                try:
-                    res_b, t_b, m_b, c_b, p_b = measure_time_memory(bid_call)
-                except Exception:
-                    continue
-                if res_b is not None:
-                    solb, neb = res_b
-                    b_found += 1
-                    b_times.append(t_b)
-                    b_nodes.append(neb)
-
-            metrics = {
-                'Dijkstra avg time (ms)': f"{(statistics.mean(d_times) if d_times else 0):.3f}",
-                'Dijkstra avg nodes': f"{(statistics.mean(d_nodes) if d_nodes else 0):.1f}",
-                'Dijkstra found count': f"{d_found}/15",
-                'Bidirectional avg time (ms)': f"{(statistics.mean(b_times) if b_times else 0):.3f}",
-                'Bidirectional avg nodes': f"{(statistics.mean(b_nodes) if b_nodes else 0):.1f}",
-                'Bidirectional found count': f"{b_found}/15",
-            }
-            # show_result_summary must run in main thread; schedule it
-            from tkinter import Toplevel, ttk
-
+            # 3. Definir a função que mostra a tabela (MODIFICADA para 7 métricas)
             def show_table_comparison(title, metrics):
                 win = Toplevel(self)
                 win.title(title)
-                win.geometry("500x200")
+                # Aumentar o tamanho da janela para caberem as 7 métricas
+                win.geometry("500x320") 
 
-                # Adiciona uma coluna extra para as métricas
                 tree = ttk.Treeview(win, columns=("Métrica", "Dijkstra", "Bidirectional"), show='headings')
                 tree.heading("Métrica", text="Métrica")
                 tree.heading("Dijkstra", text="Dijkstra")
                 tree.heading("Bidirectional", text="Bidirectional")
 
-                tree.column("Métrica", width=150, anchor='center')
+                tree.column("Métrica", width=150, anchor='w') # Alinhar à esquerda (w=West)
                 tree.column("Dijkstra", width=150, anchor='center')
                 tree.column("Bidirectional", width=150, anchor='center')
 
-                # Insere cada métrica como uma linha
+                # --- Inserir todas as 7 métricas na tabela ---
                 tree.insert("", "end", values=("Tempo médio (ms)",
                                             metrics['Dijkstra avg time (ms)'],
                                             metrics['Bidirectional avg time (ms)']))
                 tree.insert("", "end", values=("Nós médios",
                                             metrics['Dijkstra avg nodes'],
                                             metrics['Bidirectional avg nodes']))
+                tree.insert("", "end", values=("Custo médio",
+                                            metrics['Dijkstra avg cost'],
+                                            metrics['Bidirectional avg cost']))
+                tree.insert("", "end", values=("Memória Peak (KB)",
+                                            metrics['Dijkstra avg peak (KB)'],
+                                            metrics['Bidirectional avg peak (KB)']))
+                tree.insert("", "end", values=("Memória Current (KB)",
+                                            metrics['Dijkstra avg current (KB)'],
+                                            metrics['Bidirectional avg current (KB)']))
+                tree.insert("", "end", values=("Memória RSS (B)",
+                                            metrics['Dijkstra avg memory (B)'],
+                                            metrics['Bidirectional avg memory (B)']))
                 tree.insert("", "end", values=("Encontrado",
                                             metrics['Dijkstra found count'],
                                             metrics['Bidirectional found count']))
 
                 tree.pack(expand=True, fill='both', padx=10, pady=10)
 
-
-            # Substitui a linha antiga:
+            # 4. Agendar a exibição da tabela na thread principal
             self.after(0, lambda: show_table_comparison('Comparação - Algoritmos Não Informados', metrics))
 
-
-
         self._run_in_thread(worker)
+
 
     def run_informed(self, algorithm: str, heuristic: str):
         # Delegate to dedicated per-algorithm runners for clarity and symmetry
@@ -405,15 +398,8 @@ class App(tk.Tk):
 
         def worker():
             try:
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
                 choice = heuristic or 'manhattan'
                 h_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
-
-                try:
-                    from informed.a_star_search import a_star_search
-                except Exception:
-                    self.safe_write_output("A* not implemented in repository.\n")
-                    return
 
                 # Measure without callbacks to get timings/metrics
                 def run_call_measure():
@@ -448,7 +434,7 @@ class App(tk.Tk):
                     # If snapshot collection fails, continue to show metrics
                     pass
 
-                self.safe_write_output(f"Path: {len(path) if path else 0,}\nNodes expanded: {nodes_expanded}\nCost: {getattr(goal, 'g', 'N/A')}\nTime: {elapsed_time:.3f} ms\nMemory used: {memory_used:.12f} B\n\n")
+                self.safe_write_output(f"Path: {path}\nNodes expanded: {nodes_expanded}\nCost: {getattr(goal, 'g', 'N/A')}\nTime: {elapsed_time:.3f} ms\nMemory used: {memory_used:.12f} B\n\n")
                 metrics = {
                     'Status': 'Path found' if goal else 'No path',
                     'Path length': len(path) if path else 0,
@@ -488,15 +474,8 @@ class App(tk.Tk):
 
         def worker():
             try:
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
                 choice = heuristic or 'manhattan'
                 heuristic_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
-
-                try:
-                    from informed.greedy_best_first_search import greedy_best_first_search
-                except Exception:
-                    self.safe_write_output("Greedy not implemented in repository.\n")
-                    return
 
                 # Build heuristic table for greedy function
                 heuristic_table_coordinate = {
@@ -536,7 +515,7 @@ class App(tk.Tk):
                 except Exception:
                     pass
                 
-                self.safe_write_output(f"Path: {len(path) if path else 0,}\nNodes expanded: {nodes_expanded}\nCost: {getattr(goal, 'g', 'N/A')}\nTime: {elapsed_time:.3f} ms\nMemory used: {memory_used:.12f} B\n\n")
+                self.safe_write_output(f"Path: {path}\nNodes expanded: {nodes_expanded}\nCost: {getattr(goal, 'g', 'N/A')}\nTime: {elapsed_time:.3f} ms\nMemory used: {memory_used:.12f} B\n\n")
                 metrics = {
                     'Status': 'Path found' if goal else 'No path',
                     'Path length': len(path) if path else 0,
@@ -582,253 +561,99 @@ class App(tk.Tk):
         return None
 
     def run_comparison_informed(self):
-        # Run 8 informed variants (A*-Manhattan, A*-Euclidean, A*-Octile, A*-Chebyshev, Greedy-Manhattan, Greedy-Euclidean, Greedy-Octile, Greedy-Chebyshev)
+        # Executa a comparação usando a função importada
         if not self.problem:
             messagebox.showwarning("No maze", "Load a maze first")
             return
+        if not self.matrix:
+            messagebox.showwarning("No maze", "Load a maze first")
+            return
+            
         self.safe_write_output("Running informed comparison (15 runs each if available)...\n")
 
         def worker():
-            import statistics
-            N = 15
-            # Prepare containers
-            times = {
-                'A*-Manhattan': [],
-                'A*-Euclidean': [],
-                'A*-Octile': [],
-                'A*-Chebyshev': [],
-                'Greedy-Manhattan': [],
-                'Greedy-Euclidean': [],
-                'Greedy-Octile': [],
-                'Greedy-Chebyshev': [],
-            }
-            nodes = {k: [] for k in times}
-            found = {k: 0 for k in times}
-
-            # Pre-build greedy heuristic tables
-            from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+            # 2. Executar a função (ela faz o loop de 15 execuções)
             try:
-                from informed.a_star_search import a_star_search
-            except Exception:
-                a_star_search = None
-            try:
-                from informed.greedy_best_first_search import greedy_best_first_search
-            except Exception:
-                greedy_best_first_search = None
-
-            heuristic_table_manh = None
-            heuristic_table_euc = None
-            if greedy_best_first_search is not None:
-                heuristic_table_manh = {
-                    (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=h_manhattan_distance)
-                    for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
-                }
-                heuristic_table_euc = {
-                    (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=h_euclidean_distance)
-                    for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
-                }
-                heuristic_table_oct = {
-                    (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=h_octile_distance)
-                    for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
-                }
-                heuristic_table_cheb = {
-                    (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=h_chebyshev_distance)
-                    for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
-                }
-
-            for _ in range(N):
-                # A* Manhattan
-                if a_star_search is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(a_star_search, self.problem, h_manhattan_distance)
-                        if res is not None:
-                            sol, ne = res
-                            found['A*-Manhattan'] += 1
-                            times['A*-Manhattan'].append(t)
-                            nodes['A*-Manhattan'].append(ne)
-                    except Exception:
-                        pass
-
-                # A* Euclidean
-                if a_star_search is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(a_star_search, self.problem, h_euclidean_distance)
-                        if res is not None:
-                            sol, ne = res
-                            found['A*-Euclidean'] += 1
-                            times['A*-Euclidean'].append(t)
-                            nodes['A*-Euclidean'].append(ne)
-                    except Exception:
-                        pass
-
-                # A* Octile
-                if a_star_search is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(a_star_search, self.problem, h_octile_distance)
-                        if res is not None:
-                            sol, ne = res
-                            found['A*-Octile'] += 1
-                            times['A*-Octile'].append(t)
-                            nodes['A*-Octile'].append(ne)
-                    except Exception:
-                        pass
-
-                # A* Chebyshev
-                if a_star_search is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(a_star_search, self.problem, h_chebyshev_distance)
-                        if res is not None:
-                            sol, ne = res
-                            found['A*-Chebyshev'] += 1
-                            times['A*-Chebyshev'].append(t)
-                            nodes['A*-Chebyshev'].append(ne)
-                    except Exception:
-                        pass
-
-                # Greedy Manhattan
-                if greedy_best_first_search is not None and heuristic_table_manh is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(lambda: greedy_best_first_search(self.problem, lambda n: n.h, heuristic_table_manh))
-                        if res is not None:
-                            sol, ne = res
-                            found['Greedy-Manhattan'] += 1
-                            times['Greedy-Manhattan'].append(t)
-                            nodes['Greedy-Manhattan'].append(ne)
-                    except Exception:
-                        pass
-
-                # Greedy Euclidean
-                if greedy_best_first_search is not None and heuristic_table_euc is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(lambda: greedy_best_first_search(self.problem, lambda n: n.h, heuristic_table_euc))
-                        if res is not None:
-                            sol, ne = res
-                            found['Greedy-Euclidean'] += 1
-                            times['Greedy-Euclidean'].append(t)
-                            nodes['Greedy-Euclidean'].append(ne)
-                    except Exception:
-                        pass
-                
-                # Greedy Octile
-                if greedy_best_first_search is not None and heuristic_table_oct is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(lambda: greedy_best_first_search(self.problem, lambda n: n.h, heuristic_table_oct))
-                        if res is not None:
-                            sol, ne = res
-                            found['Greedy-Octile'] += 1
-                            times['Greedy-Octile'].append(t)
-                            nodes['Greedy-Octile'].append(ne)
-                    except Exception:
-                        pass
-
-                # Greedy Chebyshev
-                if greedy_best_first_search is not None and heuristic_table_cheb is not None:
-                    try:
-                        res, t, m, ccur, peak = measure_time_memory(lambda: greedy_best_first_search(self.problem, lambda n: n.h, heuristic_table_cheb))
-                        if res is not None:
-                            sol, ne = res
-                            found['Greedy-Chebyshev'] += 1
-                            times['Greedy-Chebyshev'].append(t)
-                            nodes['Greedy-Chebyshev'].append(ne)
-                    except Exception:
-                        pass
-
-            # Build metrics summary
-            metrics = {
-                'Avg time (ms)': {
-                    k: f"{(statistics.mean(times[k]) if times[k] else 0):.3f}" for k in times
-                },
-                'Avg nodes': {
-                    k: f"{(statistics.mean(nodes[k]) if nodes[k] else 0):.1f}" for k in nodes
-                },
-                'Found count': {k: f"{found[k]}/{N}" for k in found},
-            }
-
-            # schedule UI table creation in main thread
-            from tkinter import Toplevel, ttk
-
+                # Passamos a matriz e o número de execuções
+                metrics = compare_informed_search_algorithms(self.matrix, num_runs=15)
+            except Exception as e:
+                self.safe_write_output(f"Erro ao executar a comparação: {e}\n")
+                return
+            
+            # --- 3. Função de tabela MODIFICADA para 9 colunas ---
             def show_table_comparison(title, metrics):
                 win = Toplevel(self)
                 win.title(title)
-                win.geometry("700x220")
+                # Aumentar o tamanho da janela para caber 8 colunas de dados
+                win.geometry("1050x260") 
 
-                cols = ("Métrica", "A*-Manhattan", "A*-Euclidean", "A*-Octile", "A*-Chebyshev", "Greedy-Manhattan", "Greedy-Euclidean", "Greedy-Octile", "Greedy-Chebyshev")
+                cols = ("Métrica", 
+                        "A*-Manhattan", "A*-Euclidean", "A*-Octile", "A*-Chebyshev",
+                        "Greedy-Manhattan", "Greedy-Euclidean", "Greedy-Octile", "Greedy-Chebyshev")
+                
                 tree = ttk.Treeview(win, columns=cols, show='headings')
 
                 for col in cols:
                     tree.heading(col, text=col)
 
-                # Define a largura de cada coluna (em pixels)
-                tree.column("Métrica", width=130, anchor='center')
-                tree.column("A*-Manhattan", width=120, anchor='center')
-                tree.column("A*-Euclidean", width=120, anchor='center')
-                tree.column("A*-Octile", width=120, anchor='center')
-                tree.column("A*-Chebyshev", width=130, anchor='center')
-                tree.column("Greedy-Manhattan", width=140, anchor='center')
-                tree.column("Greedy-Euclidean", width=140, anchor='center')
-                tree.column("Greedy-Octile", width=140, anchor='center')
-                tree.column("Greedy-Chebyshev", width=140, anchor='center')
-
+                tree.column("Métrica", width=140, anchor='w') # Alinhar à esquerda (w=West)
+                
+                # Definir uma largura padrão para as 8 colunas de dados
+                data_col_width = 110
+                for col in cols[1:]: # Ignora a primeira coluna "Métrica"
+                    tree.column(col, width=data_col_width, anchor='center')
+                
                 tree.pack(expand=True, fill='both', padx=10, pady=10)
 
-                # Inserindo as linhas
-                tree.insert("", "end", values=("Avg time (ms)", metrics['Avg time (ms)']['A*-Manhattan'], metrics['Avg time (ms)']['A*-Euclidean'], metrics['Avg time (ms)']['A*-Octile'], metrics['Avg time (ms)']['A*-Chebyshev'], metrics['Avg time (ms)']['Greedy-Manhattan'], metrics['Avg time (ms)']['Greedy-Euclidean'], metrics['Avg time (ms)']['Greedy-Octile'], metrics['Avg time (ms)']['Greedy-Chebyshev']))
-                tree.insert("", "end", values=("Avg nodes", metrics['Avg nodes']['A*-Manhattan'], metrics['Avg nodes']['A*-Euclidean'], metrics['Avg nodes']['A*-Octile'], metrics['Avg nodes']['A*-Chebyshev'], metrics['Avg nodes']['Greedy-Manhattan'], metrics['Avg nodes']['Greedy-Euclidean'], metrics['Avg nodes']['Greedy-Octile'], metrics['Avg nodes']['Greedy-Chebyshev']))
-                tree.insert("", "end", values=("Found count", metrics['Found count']['A*-Manhattan'], metrics['Found count']['A*-Euclidean'], metrics['Found count']['A*-Octile'], metrics['Found count']['A*-Chebyshev'], metrics['Found count']['Greedy-Manhattan'], metrics['Found count']['Greedy-Euclidean'], metrics['Found count']['Greedy-Octile'], metrics['Found count']['Greedy-Chebyshev']))
+                # --- Inserir todas as métricas na tabela (linhas expandidas) ---
+                tree.insert("", "end", values=("Tempo médio (ms)", 
+                                            metrics['A*-Manhattan avg time (ms)'], 
+                                            metrics['A*-Euclidean avg time (ms)'], 
+                                            metrics['A*-Octile avg time (ms)'],
+                                            metrics['A*-Chebyshev avg time (ms)'],
+                                            metrics['Greedy-Manhattan avg time (ms)'], 
+                                            metrics['Greedy-Euclidean avg time (ms)'],
+                                            metrics['Greedy-Octile avg time (ms)'],
+                                            metrics['Greedy-Chebyshev avg time (ms)']))
+                tree.insert("", "end", values=("Nós médios", 
+                                            metrics['A*-Manhattan avg nodes'], 
+                                            metrics['A*-Euclidean avg nodes'], 
+                                            metrics['A*-Octile avg nodes'],
+                                            metrics['A*-Chebyshev avg nodes'],
+                                            metrics['Greedy-Manhattan avg nodes'], 
+                                            metrics['Greedy-Euclidean avg nodes'],
+                                            metrics['Greedy-Octile avg nodes'],
+                                            metrics['Greedy-Chebyshev avg nodes']))
+                tree.insert("", "end", values=("Custo médio", 
+                                            metrics['A*-Manhattan avg cost'], 
+                                            metrics['A*-Euclidean avg cost'], 
+                                            metrics['A*-Octile avg cost'],
+                                            metrics['A*-Chebyshev avg cost'],
+                                            metrics['Greedy-Manhattan avg cost'], 
+                                            metrics['Greedy-Euclidean avg cost'],
+                                            metrics['Greedy-Octile avg cost'],
+                                            metrics['Greedy-Chebyshev avg cost']))
+                tree.insert("", "end", values=("Memória Peak (KB)", 
+                                            metrics['A*-Manhattan avg peak (KB)'], 
+                                            metrics['A*-Euclidean avg peak (KB)'], 
+                                            metrics['A*-Octile avg peak (KB)'],
+                                            metrics['A*-Chebyshev avg peak (KB)'],
+                                            metrics['Greedy-Manhattan avg peak (KB)'], 
+                                            metrics['Greedy-Euclidean avg peak (KB)'],
+                                            metrics['Greedy-Octile avg peak (KB)'],
+                                            metrics['Greedy-Chebyshev avg peak (KB)']))
+                tree.insert("", "end", values=("Encontrado", 
+                                            metrics['A*-Manhattan found count'], 
+                                            metrics['A*-Euclidean found count'], 
+                                            metrics['A*-Octile found count'],
+                                            metrics['A*-Chebyshev found count'],
+                                            metrics['Greedy-Manhattan found count'], 
+                                            metrics['Greedy-Euclidean found count'],
+                                            metrics['Greedy-Octile found count'],
+                                            metrics['Greedy-Chebyshev found count']))
 
-            self.after(0, lambda: show_table_comparison('Informed Comparison', metrics))
-
-
-        self._run_in_thread(worker)
-
-    def run_heuristics_comparison(self):
-        # Quick comparison of Manhattan vs Euclidean vs Octile vs Chebyshev for A* if available
-        if not self.problem:
-            messagebox.showwarning("No maze", "Load a maze first")
-            return
-        if not self.has_a_star:
-            messagebox.showinfo("Not available", "A* implementation not present; heuristics comparison skipped")
-            return
-        self.safe_write_output("Running heuristics comparison for A* (5 runs each)...\n")
-
-        def worker():
-            import statistics
-            from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
-            try:
-                from informed.a_star_search import a_star_search
-            except Exception:
-                self.safe_write_output("A* not implemented in repository.\n")
-                return
-            man_times = []
-            euc_times = []
-            for _ in range(5):
-                try:
-                    res_m, t_m, *_ = measure_time_memory(a_star_search, self.problem, h_manhattan_distance)
-                    if res_m is not None:
-                        man_times.append(t_m)
-                except Exception:
-                    pass
-                try:
-                    res_e, t_e, *_ = measure_time_memory(a_star_search, self.problem, h_euclidean_distance)
-                    if res_e is not None:
-                        euc_times.append(t_e)
-                except Exception:
-                    pass
-                try:
-                    res_o, t_o, *_ = measure_time_memory(a_star_search, self.problem, h_octile_distance)
-                except Exception:
-                    pass
-                try:
-                    res_c, t_c, *_ = measure_time_memory(a_star_search, self.problem, h_chebyshev_distance)
-                except Exception:
-                    pass
-            metrics = {
-                'Manhattan avg time (ms)': f"{(statistics.mean(man_times) if man_times else 0):.3f}",
-                'Euclidean avg time (ms)': f"{(statistics.mean(euc_times) if euc_times else 0):.3f}",
-                'Octile avg time (ms)': f"{(statistics.mean(oct_times) if oct_times else 0):.3f}",
-                'Chebyshev avg time (ms)': f"{(statistics.mean(che_times) if che_times else 0):.3f}",
-            }
-            self.after(0, lambda: self.show_result_summary('Heuristics Comparison (A*)', metrics))
+            # 4. Agendar a exibição da tabela na thread principal
+            self.after(0, lambda: show_table_comparison('Comparação - Algoritmos Informados', metrics))
 
         self._run_in_thread(worker)
 
@@ -1382,12 +1207,6 @@ class App(tk.Tk):
 
             try:
                 # pick heuristic based on UI selection
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
-                try:
-                    from informed.a_star_search import a_star_search
-                except Exception:
-                    self.safe_write_output("A* import failed.\n")
-                    return
                 choice = self._viz_informed_heur_var.get() if hasattr(self, '_viz_informed_heur_var') else 'manhattan'
                 h_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
 
@@ -1445,13 +1264,6 @@ class App(tk.Tk):
                     snapshots.append({'reached_F': [], 'reached_B': [], 'frontier_F': [], 'frontier_B': [], 'current': None})
 
             try:
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
-                try:
-                    from informed.greedy_best_first_search import greedy_best_first_search
-                except Exception:
-                    self.safe_write_output("Greedy import failed.\n")
-                    return
-
                 # build heuristic table like the module expects according to UI selection
                 choice = self._viz_informed_heur_var.get() if hasattr(self, '_viz_informed_heur_var') else 'manhattan'
                 heuristic_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
@@ -1501,7 +1313,6 @@ class App(tk.Tk):
         def worker():
             try:
                 self.safe_write_output(f"Generating GIF for {alg} with heuristic={self._viz_informed_heur_var.get()}...\n")
-                from informed.generate_gifs_informed import generate_gifs_informed
                 # build an out_file under repo root data/visualizations
                 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
                 heur = self._viz_informed_heur_var.get() if hasattr(self, '_viz_informed_heur_var') else 'manhattan'
@@ -1516,7 +1327,6 @@ class App(tk.Tk):
                     self.safe_write_output("Generator reported no output (no path or snapshots)\n")
                     messagebox.showinfo("No output", "No GIF was produced (no path or snapshots)")
             except Exception as e:
-                import traceback
                 tb = traceback.format_exc()
                 self.safe_write_output(f"Error generating GIF: {e}\n{tb}\n")
 
@@ -1539,10 +1349,7 @@ class App(tk.Tk):
 
         def worker():
             try:
-                self.safe_write_output("Auto-saving informed GIFs (A*/Greedy × Manhattan/Euclidean/Octile/Chebyshev)...\n")
-                from informed.generate_gifs_informed import generate_gifs_informed
-                from pathlib import Path
-                import os
+                self.safe_write_output("Auto-saving informed GIFs (A*/Greedy × Manhattan/Euclidean/Octile/Chebyshev)...\n")            
 
                 # Tenta obter repo_root a partir de __file__; se não existir (ex.: REPL), usa cwd
                 try:
@@ -1605,7 +1412,6 @@ class App(tk.Tk):
                                 self.safe_write_output(f"No output for {alg} {heur}\n")
                                 results.append((alg, heur, False, None))
                     except Exception as e:
-                        import traceback
                         tb = traceback.format_exc()
                         self.safe_write_output(f"Error generating {alg} {heur}: {e}\n{tb}\n")
                         results.append((alg, heur, False, str(e)))
@@ -1614,20 +1420,18 @@ class App(tk.Tk):
                 ok_count = sum(1 for r in results if r[2])
                 self.safe_write_output(f"Auto-save complete: {ok_count}/{len(results)} GIFs saved.\n")
             except Exception as e:
-                import traceback
                 tb = traceback.format_exc()
                 self.safe_write_output(f"Error in auto-save worker: {e}\n{tb}\n")
 
         self._run_in_thread(worker)
 
     def save_all_uninformed_gifs_and_open_visualizer(self):
-        """Save 2 GIFs (Dijkstra/Bidirectional) in background, then open the visualize window."""
+        """Salva 2 GIFs (Dijkstra/Bidirecional) em background, e então abre a janela de visualização."""
         if not self.problem or not self.matrix:
             messagebox.showwarning("No maze", "Load a maze first")
             return
 
-        # Open visualize window immediately (non-blocking) so user can visualize
-        # on canvas while GIFs are being generated.
+        # Abre a janela de visualização imediatamente
         try:
             self.open_visualize_uninformed_window()
         except Exception:
@@ -1636,120 +1440,53 @@ class App(tk.Tk):
         def worker():
             try:
                 self.safe_write_output("Auto-saving uninformed GIFs (Dijkstra/Bidirectional)...\n")
-                # Importações necessárias para o worker
-                from pathlib import Path
-                import os
-                import tempfile 
-
-                # 1. Definir o diretório de saída (espelhando a lógica do 'informed')
+                
+                # 2. Definir o diretório de saída
                 try:
                     current_file = Path(__file__).resolve()
                     repo_root = current_file.parents[2]  # sobe de src/tools/run_gui.py
                 except Exception:
                     repo_root = Path.cwd()
-                    self.safe_write_output(f"__file__ não disponível — usando cwd como repo_root: {repo_root}\n")
                 
                 output_dir = repo_root / 'data' / 'output' / 'visualization' / 'uninformed'
-                try:
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                except Exception as e:
-                    self.safe_write_output(f"Falha ao criar diretório {output_dir}: {e}\n")
-                    raise
-
+                output_dir.mkdir(parents=True, exist_ok=True)
                 self.safe_write_output(f"Output dir = {output_dir}\n")
-                # Usar um intervalo padrão, já que não podemos usar input() no GUI
-                default_interval_ms = 100
-                
-                # Criar um arquivo temporário com a matriz atual
-                # Isto é mais seguro do que usar self.path_var.get(), pois garante
-                # que o GIF corresponda à matriz em memória.
-                tmp_maze_path = None
-                try:
-                    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt', encoding='utf-8') as tf:
-                        tmp_maze_path = tf.name
-                        for row in self.matrix:
-                            tf.write(''.join(row) + '\n')
-                    
-                    if not tmp_maze_path:
-                        raise Exception("Failed to create temp maze file")
 
-                    # --- 2. Gerar GIF do Dijkstra ---
-                    self.safe_write_output("Generating Dijkstra GIF...\n")
-                    snapshots_d = []
-                    def on_step_d(snapshot):
-                        snapshots_d.append(snapshot.copy())
-                    
+                # 3. Executar a geração para cada algoritmo
+                algorithms_to_run = ['dijkstra', 'bidirectional']
+                results = []
+                for alg in algorithms_to_run:
+                    out_name = f'visualization-{alg}.gif'
+                    out_path = output_dir / out_name
                     try:
-                        resultDijkstra = dijkstra(self.problem, on_step=on_step_d)
-                        if resultDijkstra is None:
-                            self.safe_write_output("Dijkstra: No path found, GIF skipped.\n")
-                        else:
-                            solution, nodes_expanded = resultDijkstra
-                            out_path_d = output_dir / 'visualization-dijkstra.gif'
-                            
-                            # Chamar a função de visualização (já importada no topo do run_gui.py)
-                            visualize_matrix.visualize(
-                                tmp_maze_path, # Usar o path do arquivo temporário
-                                f=lambda n: n.g,
-                                interval=default_interval_ms,
-                                precompute=True,
-                                precomputed_snapshots=snapshots_d,
-                                final_path=reconstruct_path(solution) if solution else None,
-                                tree_nodes=self._collect_tree_nodes(snapshots_d),
-                                final_hold_ms=5000,
-                                out_file=str(out_path_d),
-                            )
-                            self.safe_write_output(f"Saved Dijkstra GIF to {out_path_d}\n")
-                    except Exception as e:
-                        self.safe_write_output(f"Error generating Dijkstra GIF: {e}\n")
-
-                    # --- 3. Gerar GIF do Bidirectional ---
-                    self.safe_write_output("Generating Bidirectional GIF...\n")
-                    snapshots_b = []
-                    def on_step_b(snapshot):
-                        snapshots_b.append(snapshot.copy())
-                    
-                    try:
-                        problem_2 = self._create_swapped_problem()
-                        resultBid = bidirectional_best_first_search(
-                            problem_F=self.problem, f_F=lambda n: n.g,
-                            problem_B=problem_2, f_B=lambda n: n.g,
-                            on_step=on_step_b
+                        self.safe_write_output(f"Generating {alg} GIF -> {out_path} ...\n")
+                        
+                        # Chama a função refatorada
+                        res = generate_gifs_uninformed(
+                            problem=self.problem,
+                            matrix=self.matrix,
+                            algorithm=alg,
+                            interval_ms=100,
+                            out_file=str(out_path)
                         )
                         
-                        if resultBid is None:
-                            self.safe_write_output("Bidirectional: No path found, GIF skipped.\n")
+                        if res and Path(res).exists():
+                            self.safe_write_output(f"Saved: {res}\n")
+                            results.append((alg, True, res))
                         else:
-                            solution, nodes_expanded = resultBid
-                            out_path_b = output_dir / 'visualization-bidirectional.gif'
-                            
-                            visualize_matrix.visualize(
-                                tmp_maze_path, # Usar o path do arquivo temporário
-                                f=lambda n: n.g,
-                                interval=default_interval_ms,
-                                precompute=True,
-                                precomputed_snapshots=snapshots_b,
-                                final_path=reconstruct_path(solution) if solution else None,
-                                tree_nodes=self._collect_tree_nodes(snapshots_b),
-                                final_hold_ms=5000,
-                                out_file=str(out_path_b),
-                            )
-                            self.safe_write_output(f"Saved Bidirectional GIF to {out_path_b}\n")
+                            self.safe_write_output(f"No output for {alg}\n")
+                            results.append((alg, False, None))
+
                     except Exception as e:
-                        self.safe_write_output(f"Error generating Bidirectional GIF: {e}\n")
+                        tb = traceback.format_exc()
+                        self.safe_write_output(f"Error generating {alg} GIF: {e}\n{tb}\n")
+                        results.append((alg, False, str(e)))
 
-                    self.safe_write_output("Auto-save complete for uninformed GIFs.\n")
-
-                finally:
-                    # Limpar o arquivo temporário
-                    if tmp_maze_path and os.path.exists(tmp_maze_path):
-                        try:
-                            os.unlink(tmp_maze_path)
-                        except Exception as e:
-                            self.safe_write_output(f"Warning: could not delete temp file {tmp_maze_path}: {e}\n")
+                # 4. Sumarizar os resultados
+                ok_count = sum(1 for r in results if r[1])
+                self.safe_write_output(f"Auto-save complete: {ok_count}/{len(results)} GIFs saved.\n")
 
             except Exception as e:
-                import traceback
                 tb = traceback.format_exc()
                 self.safe_write_output(f"Error in uninformed auto-save worker: {e}\n{tb}\n")
 

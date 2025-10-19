@@ -33,7 +33,7 @@ def compute_greedy_best_first_search(problem: Problem, heuristic: str):
         print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
 def greedy_best_first_search(problem: Problem, f: Callable[[Node], float], heuristic_table_coordinate: dict, on_step: Callable[[dict], None] | None = None) -> Optional[Tuple[Node, int]]:
-    print(heuristic_table_coordinate[problem.initial])
+    # print(heuristic_table_coordinate[problem.initial])
     start = Node(state=problem.initial, f=heuristic_table_coordinate[problem.initial], h=heuristic_table_coordinate[problem.initial])
     frontier = []
     heapq.heappush(frontier, (f(start), start))

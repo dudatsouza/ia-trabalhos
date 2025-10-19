@@ -69,8 +69,8 @@ Para instalar o projeto, siga os passos abaixo:
 
   1. Clone o repositório no diretório desejado:
   ```console
-  git clone https://github.com/dudatsouza/women-violence-graphs.git
-  cd women-violence-graphs
+  git clone https://github.com/dudatsouza/ia-trabalhos.git
+  cd ia-trabalhos/trabalho1
   ```
   2. Para a execução é necessário ter as seguintes bibliotecas instaladas:
 <!-- - `pandas`
