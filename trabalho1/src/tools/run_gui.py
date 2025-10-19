@@ -1,7 +1,11 @@
 import os
 import threading
+import sys
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, src_path)
 
 # Try to import project modules using the new package layout. If imports fail,
 # the GUI will still be created but action buttons that rely on the code will
@@ -59,7 +63,7 @@ class App(tk.Tk):
         self._gif_image_id = None
         self._last_drawn = {}
 
-        # informed visualization heuristic selection (manhattan|euclidean)
+        # informed visualization heuristic selection (manhattan|euclidean|octile|chebyshev)
         self._viz_informed_heur_var = tk.StringVar(value='manhattan')
 
         self.create_widgets()
@@ -181,7 +185,7 @@ class App(tk.Tk):
         ttk.Button(w, text="Comparison of A* and Greedy", command=lambda: [w.destroy(), self.run_comparison_informed()]).pack(fill=tk.X, padx=8, pady=4)
         ttk.Button(w, text="Comparison of Heuristics", command=lambda: [w.destroy(), self.run_heuristics_comparison()]).pack(fill=tk.X, padx=8, pady=4)
         # When the user requests to visualize informed searches, first auto-save
-        # all 4 GIFs in background (A*/Greedy × Manhattan/Euclidean), then open
+        # all 4 GIFs in background (A*/Greedy × Manhattan/Euclidean/Octile/Chebyshev), then open
         # the visualize window for canvas playback. This keeps the UI simple: the
         # visualize window only contains playback actions.
         ttk.Button(
@@ -197,6 +201,8 @@ class App(tk.Tk):
         ttk.Label(w, text=f"Choose heuristic for {algorithm}:").pack(padx=10, pady=8)
         ttk.Button(w, text="Manhattan Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'manhattan')]).pack(fill=tk.X, padx=8, pady=4)
         ttk.Button(w, text="Euclidean Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'euclidean')]).pack(fill=tk.X, padx=8, pady=4)
+        ttk.Button(w, text="Octile Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'octile')]).pack(fill=tk.X, padx=8, pady=4)
+        ttk.Button(w, text="Chebyshev Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'chebyshev')]).pack(fill=tk.X, padx=8, pady=4)
         ttk.Button(w, text="Back", command=w.destroy).pack(fill=tk.X, padx=8, pady=6)
 
     def open_graph_window(self):
@@ -399,9 +405,9 @@ class App(tk.Tk):
 
         def worker():
             try:
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance
+                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
                 choice = heuristic or 'manhattan'
-                h_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance
+                h_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
 
                 try:
                     from informed.a_star_search import a_star_search
@@ -482,9 +488,9 @@ class App(tk.Tk):
 
         def worker():
             try:
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance
+                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
                 choice = heuristic or 'manhattan'
-                heuristic_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance
+                heuristic_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
 
                 try:
                     from informed.greedy_best_first_search import greedy_best_first_search
@@ -576,7 +582,7 @@ class App(tk.Tk):
         return None
 
     def run_comparison_informed(self):
-        # Run 4 informed variants (A*-Manhattan, A*-Euclidean, Greedy-Manhattan, Greedy-Euclidean)
+        # Run 8 informed variants (A*-Manhattan, A*-Euclidean, A*-Octile, A*-Chebyshev, Greedy-Manhattan, Greedy-Euclidean, Greedy-Octile, Greedy-Chebyshev)
         if not self.problem:
             messagebox.showwarning("No maze", "Load a maze first")
             return
@@ -589,14 +595,18 @@ class App(tk.Tk):
             times = {
                 'A*-Manhattan': [],
                 'A*-Euclidean': [],
+                'A*-Octile': [],
+                'A*-Chebyshev': [],
                 'Greedy-Manhattan': [],
                 'Greedy-Euclidean': [],
+                'Greedy-Octile': [],
+                'Greedy-Chebyshev': [],
             }
             nodes = {k: [] for k in times}
             found = {k: 0 for k in times}
 
             # Pre-build greedy heuristic tables
-            from core.heuristics import h_manhattan_distance, h_euclidean_distance
+            from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
             try:
                 from informed.a_star_search import a_star_search
             except Exception:
@@ -615,6 +625,14 @@ class App(tk.Tk):
                 }
                 heuristic_table_euc = {
                     (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=h_euclidean_distance)
+                    for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
+                }
+                heuristic_table_oct = {
+                    (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=h_octile_distance)
+                    for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
+                }
+                heuristic_table_cheb = {
+                    (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=h_chebyshev_distance)
                     for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
                 }
 
@@ -643,6 +661,30 @@ class App(tk.Tk):
                     except Exception:
                         pass
 
+                # A* Octile
+                if a_star_search is not None:
+                    try:
+                        res, t, m, ccur, peak = measure_time_memory(a_star_search, self.problem, h_octile_distance)
+                        if res is not None:
+                            sol, ne = res
+                            found['A*-Octile'] += 1
+                            times['A*-Octile'].append(t)
+                            nodes['A*-Octile'].append(ne)
+                    except Exception:
+                        pass
+
+                # A* Chebyshev
+                if a_star_search is not None:
+                    try:
+                        res, t, m, ccur, peak = measure_time_memory(a_star_search, self.problem, h_chebyshev_distance)
+                        if res is not None:
+                            sol, ne = res
+                            found['A*-Chebyshev'] += 1
+                            times['A*-Chebyshev'].append(t)
+                            nodes['A*-Chebyshev'].append(ne)
+                    except Exception:
+                        pass
+
                 # Greedy Manhattan
                 if greedy_best_first_search is not None and heuristic_table_manh is not None:
                     try:
@@ -666,6 +708,30 @@ class App(tk.Tk):
                             nodes['Greedy-Euclidean'].append(ne)
                     except Exception:
                         pass
+                
+                # Greedy Octile
+                if greedy_best_first_search is not None and heuristic_table_oct is not None:
+                    try:
+                        res, t, m, ccur, peak = measure_time_memory(lambda: greedy_best_first_search(self.problem, lambda n: n.h, heuristic_table_oct))
+                        if res is not None:
+                            sol, ne = res
+                            found['Greedy-Octile'] += 1
+                            times['Greedy-Octile'].append(t)
+                            nodes['Greedy-Octile'].append(ne)
+                    except Exception:
+                        pass
+
+                # Greedy Chebyshev
+                if greedy_best_first_search is not None and heuristic_table_cheb is not None:
+                    try:
+                        res, t, m, ccur, peak = measure_time_memory(lambda: greedy_best_first_search(self.problem, lambda n: n.h, heuristic_table_cheb))
+                        if res is not None:
+                            sol, ne = res
+                            found['Greedy-Chebyshev'] += 1
+                            times['Greedy-Chebyshev'].append(t)
+                            nodes['Greedy-Chebyshev'].append(ne)
+                    except Exception:
+                        pass
 
             # Build metrics summary
             metrics = {
@@ -686,7 +752,7 @@ class App(tk.Tk):
                 win.title(title)
                 win.geometry("700x220")
 
-                cols = ("Métrica", "A*-Manhattan", "A*-Euclidean", "Greedy-Manhattan", "Greedy-Euclidean")
+                cols = ("Métrica", "A*-Manhattan", "A*-Euclidean", "A*-Octile", "A*-Chebyshev", "Greedy-Manhattan", "Greedy-Euclidean", "Greedy-Octile", "Greedy-Chebyshev")
                 tree = ttk.Treeview(win, columns=cols, show='headings')
 
                 for col in cols:
@@ -696,15 +762,19 @@ class App(tk.Tk):
                 tree.column("Métrica", width=130, anchor='center')
                 tree.column("A*-Manhattan", width=120, anchor='center')
                 tree.column("A*-Euclidean", width=120, anchor='center')
+                tree.column("A*-Octile", width=120, anchor='center')
+                tree.column("A*-Chebyshev", width=130, anchor='center')
                 tree.column("Greedy-Manhattan", width=140, anchor='center')
                 tree.column("Greedy-Euclidean", width=140, anchor='center')
+                tree.column("Greedy-Octile", width=140, anchor='center')
+                tree.column("Greedy-Chebyshev", width=140, anchor='center')
 
                 tree.pack(expand=True, fill='both', padx=10, pady=10)
 
                 # Inserindo as linhas
-                tree.insert("", "end", values=("Avg time (ms)", metrics['Avg time (ms)']['A*-Manhattan'], metrics['Avg time (ms)']['A*-Euclidean'], metrics['Avg time (ms)']['Greedy-Manhattan'], metrics['Avg time (ms)']['Greedy-Euclidean']))
-                tree.insert("", "end", values=("Avg nodes", metrics['Avg nodes']['A*-Manhattan'], metrics['Avg nodes']['A*-Euclidean'], metrics['Avg nodes']['Greedy-Manhattan'], metrics['Avg nodes']['Greedy-Euclidean']))
-                tree.insert("", "end", values=("Found count", metrics['Found count']['A*-Manhattan'], metrics['Found count']['A*-Euclidean'], metrics['Found count']['Greedy-Manhattan'], metrics['Found count']['Greedy-Euclidean']))
+                tree.insert("", "end", values=("Avg time (ms)", metrics['Avg time (ms)']['A*-Manhattan'], metrics['Avg time (ms)']['A*-Euclidean'], metrics['Avg time (ms)']['A*-Octile'], metrics['Avg time (ms)']['A*-Chebyshev'], metrics['Avg time (ms)']['Greedy-Manhattan'], metrics['Avg time (ms)']['Greedy-Euclidean'], metrics['Avg time (ms)']['Greedy-Octile'], metrics['Avg time (ms)']['Greedy-Chebyshev']))
+                tree.insert("", "end", values=("Avg nodes", metrics['Avg nodes']['A*-Manhattan'], metrics['Avg nodes']['A*-Euclidean'], metrics['Avg nodes']['A*-Octile'], metrics['Avg nodes']['A*-Chebyshev'], metrics['Avg nodes']['Greedy-Manhattan'], metrics['Avg nodes']['Greedy-Euclidean'], metrics['Avg nodes']['Greedy-Octile'], metrics['Avg nodes']['Greedy-Chebyshev']))
+                tree.insert("", "end", values=("Found count", metrics['Found count']['A*-Manhattan'], metrics['Found count']['A*-Euclidean'], metrics['Found count']['A*-Octile'], metrics['Found count']['A*-Chebyshev'], metrics['Found count']['Greedy-Manhattan'], metrics['Found count']['Greedy-Euclidean'], metrics['Found count']['Greedy-Octile'], metrics['Found count']['Greedy-Chebyshev']))
 
             self.after(0, lambda: show_table_comparison('Informed Comparison', metrics))
 
@@ -712,7 +782,7 @@ class App(tk.Tk):
         self._run_in_thread(worker)
 
     def run_heuristics_comparison(self):
-        # Quick comparison of Manhattan vs Euclidean for A* if available
+        # Quick comparison of Manhattan vs Euclidean vs Octile vs Chebyshev for A* if available
         if not self.problem:
             messagebox.showwarning("No maze", "Load a maze first")
             return
@@ -723,7 +793,7 @@ class App(tk.Tk):
 
         def worker():
             import statistics
-            from core.heuristics import h_manhattan_distance, h_euclidean_distance
+            from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
             try:
                 from informed.a_star_search import a_star_search
             except Exception:
@@ -744,9 +814,19 @@ class App(tk.Tk):
                         euc_times.append(t_e)
                 except Exception:
                     pass
+                try:
+                    res_o, t_o, *_ = measure_time_memory(a_star_search, self.problem, h_octile_distance)
+                except Exception:
+                    pass
+                try:
+                    res_c, t_c, *_ = measure_time_memory(a_star_search, self.problem, h_chebyshev_distance)
+                except Exception:
+                    pass
             metrics = {
                 'Manhattan avg time (ms)': f"{(statistics.mean(man_times) if man_times else 0):.3f}",
                 'Euclidean avg time (ms)': f"{(statistics.mean(euc_times) if euc_times else 0):.3f}",
+                'Octile avg time (ms)': f"{(statistics.mean(oct_times) if oct_times else 0):.3f}",
+                'Chebyshev avg time (ms)': f"{(statistics.mean(che_times) if che_times else 0):.3f}",
             }
             self.after(0, lambda: self.show_result_summary('Heuristics Comparison (A*)', metrics))
 
@@ -1264,6 +1344,8 @@ class App(tk.Tk):
         heur_frame.pack(padx=10, pady=(0, 6))
         ttk.Radiobutton(heur_frame, text="Manhattan", variable=self._viz_informed_heur_var, value='manhattan').pack(side=tk.LEFT, padx=4)
         ttk.Radiobutton(heur_frame, text="Euclidean", variable=self._viz_informed_heur_var, value='euclidean').pack(side=tk.LEFT, padx=4)
+        ttk.Radiobutton(heur_frame, text="Octile", variable=self._viz_informed_heur_var, value='octile').pack(side=tk.LEFT, padx=4)
+        ttk.Radiobutton(heur_frame, text="Chebyshev", variable=self._viz_informed_heur_var, value='chebyshev').pack(side=tk.LEFT, padx=4)
         a_star_state = ' (missing)' if not self.has_a_star else ''
         greedy_state = ' (missing)' if not self.has_greedy else ''
         ttk.Button(w, text=f"Visualize A*{a_star_state}", command=lambda: [w.destroy(), self.visualize_a_star()]).pack(fill=tk.X, padx=8, pady=4)
@@ -1300,14 +1382,14 @@ class App(tk.Tk):
 
             try:
                 # pick heuristic based on UI selection
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance
+                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
                 try:
                     from informed.a_star_search import a_star_search
                 except Exception:
                     self.safe_write_output("A* import failed.\n")
                     return
                 choice = self._viz_informed_heur_var.get() if hasattr(self, '_viz_informed_heur_var') else 'manhattan'
-                h_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance
+                h_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
 
                 def run_call():
                     return a_star_search(self.problem, h_fn, on_step=on_step)
@@ -1363,7 +1445,7 @@ class App(tk.Tk):
                     snapshots.append({'reached_F': [], 'reached_B': [], 'frontier_F': [], 'frontier_B': [], 'current': None})
 
             try:
-                from core.heuristics import h_manhattan_distance, h_euclidean_distance
+                from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
                 try:
                     from informed.greedy_best_first_search import greedy_best_first_search
                 except Exception:
@@ -1372,7 +1454,8 @@ class App(tk.Tk):
 
                 # build heuristic table like the module expects according to UI selection
                 choice = self._viz_informed_heur_var.get() if hasattr(self, '_viz_informed_heur_var') else 'manhattan'
-                heuristic_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance
+                heuristic_fn = h_manhattan_distance if choice == 'manhattan' else h_euclidean_distance if choice == 'euclidean' else h_octile_distance if choice == 'octile' else h_chebyshev_distance
+
                 heuristic_table_coordinate = {
                     (r, c): self.problem.heuristic((r, c), self.problem.goal, function_h=heuristic_fn)
                     for r in range(self.problem.maze.H) for c in range(self.problem.maze.W)
@@ -1440,7 +1523,7 @@ class App(tk.Tk):
         self._run_in_thread(worker)
 
     def save_all_informed_gifs_and_open_visualizer(self):
-        """Save 4 GIFs (A*/Greedy × Manhattan/Euclidean) in background, then open the visualize window.
+        """Save 4 GIFs (A*/Greedy × Manhattan/Euclidean/Octile/Chebyshev) in background, then open the visualize window.
 
         This is called when the user clicks 'Visualize Informed Searches'. The
         method will schedule background work to generate the GIFs and will
@@ -1456,7 +1539,7 @@ class App(tk.Tk):
 
         def worker():
             try:
-                self.safe_write_output("Auto-saving informed GIFs (A*/Greedy × Manhattan/Euclidean)...\n")
+                self.safe_write_output("Auto-saving informed GIFs (A*/Greedy × Manhattan/Euclidean/Octile/Chebyshev)...\n")
                 from informed.generate_gifs_informed import generate_gifs_informed
                 from pathlib import Path
                 import os
@@ -1486,8 +1569,12 @@ class App(tk.Tk):
                 combos = [
                     ('a_star', 'manhattan'),
                     ('a_star', 'euclidean'),
+                    ('a_star', 'octile'),
+                    ('a_star', 'chebyshev'),
                     ('greedy', 'manhattan'),
                     ('greedy', 'euclidean'),
+                    ('greedy', 'octile'),
+                    ('greedy', 'chebyshev'),
                 ]
                 results = []
                 for alg, heur in combos:
