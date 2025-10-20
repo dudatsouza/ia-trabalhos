@@ -168,12 +168,17 @@ def plot_informed_time_memory(metrics: dict, out_dir: str | Path | None = None):
     
     out_dir = repo_root / 'data' / 'output' / 'graphics' / 'informed'
 
-    # DEFINE ALGORITHMS AND HEURISTICS
+    # DEFINE ALGORITHMS AND HEURISTICS (ALL 4 HEURISTICS)
     algorithms = [
-        ('A*-Manhattan',  metrics.get('A*-Manhattan avg time (ms)', 0),  metrics.get('A*-Manhattan avg memory (B)', 0)),
-        ('A*-Euclidean',  metrics.get('A*-Euclidean avg time (ms)', 0),  metrics.get('A*-Euclidean avg memory (B)', 0)),
+        ('A*-Manhattan',   metrics.get('A*-Manhattan avg time (ms)', 0),   metrics.get('A*-Manhattan avg memory (B)', 0)),
+        ('A*-Euclidean',   metrics.get('A*-Euclidean avg time (ms)', 0),   metrics.get('A*-Euclidean avg memory (B)', 0)),
+        ('A*-Octile',      metrics.get('A*-Octile avg time (ms)', 0),      metrics.get('A*-Octile avg memory (B)', 0)),
+        ('A*-Chebyshev',   metrics.get('A*-Chebyshev avg time (ms)', 0),   metrics.get('A*-Chebyshev avg memory (B)', 0)),
+
         ('Greedy-Manhattan', metrics.get('Greedy-Manhattan avg time (ms)', 0), metrics.get('Greedy-Manhattan avg memory (B)', 0)),
-        ('Greedy-Euclidean', metrics.get('Greedy-Euclidean avg time (ms)', 0), metrics.get('Greedy-Euclidean avg memory (B)', 0))
+        ('Greedy-Euclidean', metrics.get('Greedy-Euclidean avg time (ms)', 0), metrics.get('Greedy-Euclidean avg memory (B)', 0)),
+        ('Greedy-Octile',    metrics.get('Greedy-Octile avg time (ms)', 0),    metrics.get('Greedy-Octile avg memory (B)', 0)),
+        ('Greedy-Chebyshev', metrics.get('Greedy-Chebyshev avg time (ms)', 0), metrics.get('Greedy-Chebyshev avg memory (B)', 0))
     ]
 
     # PREPARE PLOT
@@ -182,7 +187,7 @@ def plot_informed_time_memory(metrics: dict, out_dir: str | Path | None = None):
     for name, time_val, mem_val in algorithms:
         plt.plot(
             float(time_val),
-            float(mem_val) / 1024,  # convert B → KB
+            float(mem_val) / 1024,  # Convert B → KB
             marker='o',
             label=name
         )
