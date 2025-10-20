@@ -1,16 +1,27 @@
+# EXTERNAL IMPORTS
 import statistics
+
+# INTERNAL PROJECT IMPORTS
+# UNINFORMED SEARCH
 from uninformed.bidirectional_best_first_search import bidirectional_best_first_search
-from search.best_first_search import best_first_search
 from uninformed.dijkstra import dijkstra
+
+# CORE
 from core.maze_problem import MazeProblem
 from core.maze_representation import Maze
+
+# SEARCH
+from search.best_first_search import best_first_search
 from search.measure_time_memory import measure_time_memory
 
+
+# COMPARE DIJKSTRA AND BIDIRECTIONAL BEST-FIRST SEARCH
 def compare_uninformed_search_algorithms(matrix):
+    # PREPARE MAZE AND PROBLEM
     mz = Maze(matrix)
     problem = MazeProblem(mz)
     
-    # --- Coleta de Dados (exatamente como no seu arquivo) ---
+    # --- DATA COLLECTION FOR METRICS ---
     dijkstra_times = []
     dijkstra_memories = []
     dijkstra_nodes_expanded = []
@@ -27,7 +38,9 @@ def compare_uninformed_search_algorithms(matrix):
     bid_bfs_costs = []
     bid_bfs_total_path_found = 0
 
+    # AUXILIARY FUNCTION FOR BIDIRECTIONAL BEST-FIRST SEARCH
     def bid_bfs():
+        # PREPARE A REVERSED MATRIX FOR BIDIRECTIONAL SEARCH
         matrix_2 = [row[:] for row in matrix]  
         for r in range(len(matrix_2)):
             for c in range(len(matrix_2[0])):
@@ -37,10 +50,17 @@ def compare_uninformed_search_algorithms(matrix):
                     matrix_2[r][c] = 'S'
         mz_2 = Maze(matrix_2)
         problem_2 = MazeProblem(mz_2)
-        return bidirectional_best_first_search(problem_F=problem, f_F=lambda n: n.g, problem_B=problem_2, f_B=lambda n: n.g)
+        # RUN BIDIRECTIONAL BEST-FIRST SEARCH
+        return bidirectional_best_first_search(
+            problem_F=problem,
+            f_F=lambda n: n.g,
+            problem_B=problem_2,
+            f_B=lambda n: n.g
+        )
 
+    # LOOP TO COLLECT METRICS (15 TIMES)
     for _ in range(15):
-        # Dijkstra
+        # --- DIJKSTRA ---
         result_dij, elapsed_time_dij, memory_used_dij, current_dij, peak_dij = measure_time_memory(dijkstra, problem)
         if result_dij is not None:
             solution, nodes_expanded_dij = result_dij
@@ -52,7 +72,7 @@ def compare_uninformed_search_algorithms(matrix):
             dijkstra_peaks.append(peak_dij)
             dijkstra_costs.append(solution.g)
 
-        # Bidirectional
+        # --- BIDIRECTIONAL BEST-FIRST SEARCH ---
         result_bfs, elapsed_time_bfs, memory_used_bfs, current_bfs, peak_bfs = measure_time_memory(bid_bfs)
         if result_bfs is not None:
             solution, nodes_expanded_bfs = result_bfs
@@ -64,9 +84,7 @@ def compare_uninformed_search_algorithms(matrix):
             bid_bfs_peaks.append(peak_bfs)
             bid_bfs_costs.append(solution.g)
 
-    # --- INÍCIO DA MODIFICAÇÃO ---
-    
-    # Calcular médias de todas as métricas
+    # --- CALCULATE AVERAGES ---
     avg_dijkstra_time = statistics.mean(dijkstra_times) if dijkstra_times else 0
     avg_dijkstra_memory = statistics.mean(dijkstra_memories) if dijkstra_memories else 0
     avg_dijkstra_nodes_expanded = statistics.mean(dijkstra_nodes_expanded) if dijkstra_nodes_expanded else 0
@@ -81,8 +99,7 @@ def compare_uninformed_search_algorithms(matrix):
     avg_bid_bfs_peaks = statistics.mean(bid_bfs_peaks) if bid_bfs_peaks else 0
     avg_bid_bfs_costs = statistics.mean(bid_bfs_costs) if bid_bfs_costs else 0
 
-
-    # Em vez de imprimir, retorne o dicionário completo de métricas
+    # RETURN DICTIONARY WITH ALL METRICS
     metrics = {
         'Dijkstra avg time (ms)': f"{avg_dijkstra_time:.3f}",
         'Dijkstra avg memory (B)': f"{avg_dijkstra_memory:.3f}",
@@ -96,10 +113,8 @@ def compare_uninformed_search_algorithms(matrix):
         'Bidirectional avg memory (B)': f"{avg_bid_bfs_memory:.3f}",
         'Bidirectional avg nodes': f"{avg_bid_bfs_nodes_expanded:.1f}",
         'Bidirectional avg current (KB)': f"{(avg_bid_bfs_currents / 1024):.3f}",
-        # Corrigido: seu script original esqueceu de dividir 'peak_bfs' por 1024
         'Bidirectional avg peak (KB)': f"{(avg_bid_bfs_peaks / 1024):.3f}", 
         'Bidirectional found count': f"{bid_bfs_total_path_found}/15",
         'Bidirectional avg cost': f"{avg_bid_bfs_costs:.3f}",
     }
     return metrics
-    

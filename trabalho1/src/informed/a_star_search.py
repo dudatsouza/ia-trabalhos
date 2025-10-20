@@ -1,28 +1,40 @@
+# EXTERNAL IMPORTS
+import heapq
+from typing import Optional, Tuple, Callable, Dict, Any
+
+# INTERNAL PROJECT IMPORTS
+# CORE
 from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
-from typing import Optional, Tuple, Callable, Dict
 from core.problem import Problem
 from core.node import Node
-from search.measure_time_memory import measure_time_memory
-import heapq
 
+# SEARCH
+from search.measure_time_memory import measure_time_memory
+
+
+# COMPUTES A* SEARCH USING A SPECIFIED HEURISTIC
 def compute_a_star_search(problem: Problem, heuristic: str):
-    # 1. Construir a tabela de heurística (seu código está aqui)
+    # BUILD HEURISTIC TABLE FOR ALL COORDINATES
     heuristic_table_coordinate = {
-        (x, y): problem.heuristic((x, y), problem.goal, function_h=
-            h_manhattan_distance if heuristic == "manhattan" else  h_euclidean_distance if heuristic == "euclidean" else h_octile_distance if heuristic == "octile" else h_chebyshev_distance)
+        (x, y): problem.heuristic(
+            (x, y),
+            problem.goal,
+            function_h=h_manhattan_distance if heuristic == "manhattan" else
+                       h_euclidean_distance if heuristic == "euclidean" else
+                       h_octile_distance if heuristic == "octile" else
+                       h_chebyshev_distance
+        )
         for x in range(problem.maze.W) for y in range(problem.maze.H)
     }
 
-    # 2. Definir a função f CORRETA para A*
+    # DEFINE f FUNCTION FOR A* (G + H)
     f_astar = lambda n: n.g + n.h 
 
-    # 3. Chamar 'a_star_table_search' (NÃO 'a_star_search')
-    # A assinatura de a_star_table_search é: (problem, f, heuristic_table_coordinate, on_step)
-    # Nós omitimos 'on_step' (passando None)
+    # CALL THE TABLE-BASED A* SEARCH AND MEASURE TIME/MEMORY
     result, elapsed_time, memory_used, current, peak = measure_time_memory(
-        a_star_table_search,      # <--- MUDANÇA AQUI
+        a_star_table_search,
         problem,
-        f_astar,                  # <--- MUDANÇA AQUI (g + h)
+        f_astar,
         heuristic_table_coordinate
     )
 
@@ -36,20 +48,22 @@ def compute_a_star_search(problem: Problem, heuristic: str):
         path = reconstruct_path(goal_node)
         print("Path:", path)
         print("Number of nodes expanded:", nodes_expanded)
-        # 4. Corrigir o Custo: O custo real é 'g', não 'f'
-        print("Cost of path:", goal_node.g) # <--- MUDANÇA AQUI
+        print("Cost of path:", goal_node.g)  # REAL COST IS G, NOT F
         print(f"Time taken: {elapsed_time:.3f} milliseconds")
         print(f"Memory used: {memory_used:.12f} B")
         print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
 
-def a_star_table_search(problem: Problem, f: Callable[[Node], float], heuristic_table_coordinate: Dict[tuple, float], on_step: Optional[Callable[[dict], None]] = None) -> Optional[Tuple[Node, int]]:
-    """A* variant that uses a precomputed heuristic table (heuristic_table_coordinate).
-
-    This mirrors the style of greedy_best_first_search which expects a heuristic table
-    passed in. The function uses g + h_table[state] as f(n).
-    """
-    start = Node(state=problem.initial, g=0.0, h=heuristic_table_coordinate[problem.initial], f=heuristic_table_coordinate[problem.initial])
+# A* SEARCH USING PRECOMPUTED HEURISTIC TABLE
+def a_star_table_search(problem: Problem, f: Callable[[Node], float],
+                        heuristic_table_coordinate: Dict[tuple, float],
+                        on_step: Optional[Callable[[dict], None]] = None) -> Optional[Tuple[Node, int]]:
+    start = Node(
+        state=problem.initial,
+        g=0.0,
+        h=heuristic_table_coordinate[problem.initial],
+        f=heuristic_table_coordinate[problem.initial]
+    )
     frontier = []
     heapq.heappush(frontier, (f(start), start))
     reached = {start.state: start}
@@ -60,20 +74,17 @@ def a_star_table_search(problem: Problem, f: Callable[[Node], float], heuristic_
         if problem.is_goal(node.state):
             return node, nodes_expanded
 
-        # mark explored
         reached_node = reached.get(node.state)
-        # skip outdated entries: if reached maps to a different node with better g, skip
         if reached_node is not None and reached_node is not node and reached_node.g < node.g:
             continue
 
-        # expand children
+        # EXPAND CHILDREN
         for action in problem.actions(node.state):
             s2 = problem.result(node.state, action)
             g2 = node.g + problem.action_cost(node.state, action, s2)
             h_val = heuristic_table_coordinate.get(s2, 0.0)
             child = Node(state=s2, parent=node, action=action, g=g2, h=h_val, f=g2 + h_val)
 
-            # emit snapshot before expanding a node
             if on_step:
                 snapshot = {
                     'current': node.state,
@@ -90,7 +101,6 @@ def a_star_table_search(problem: Problem, f: Callable[[Node], float], heuristic_
                 heapq.heappush(frontier, (f(child), child))
                 nodes_expanded += 1
 
-                # emit snapshot when pushing a child
                 if on_step:
                     snapshot = {
                         'current': child.state,
@@ -103,29 +113,24 @@ def a_star_table_search(problem: Problem, f: Callable[[Node], float], heuristic_
     return None
 
 
-def a_star_search(problem: Problem, h: Optional[Callable[[any, any], float]] = None, on_step: Optional[Callable[[dict], None]] = None) -> Optional[Tuple[Node, int]]:
-    """Public A* wrapper that builds a heuristic table and calls the table-based A*.
-
-    Keeps the old signature (problem, h) so existing callers (GUI) remain compatible.
-    If h is None, uses problem.heuristic to compute the table.
-    """
-    # build heuristic table similarly to greedy implementation
-    heuristic_fn = h
-    if heuristic_fn is None:
-        # use problem.heuristic compatible signature: (s, goal, function_h=None)
-        heuristic_fn = lambda s, goal: problem.heuristic(s, goal)
+# PUBLIC WRAPPER FOR A* THAT BUILDS HEURISTIC TABLE
+def a_star_search(problem: Problem, h: Optional[Callable[[Any, Any], float]] = None,
+                  on_step: Optional[Callable[[dict], None]] = None) -> Optional[Tuple[Node, int]]:
+    heuristic_fn = h or (lambda s, goal: problem.heuristic(s, goal))
 
     heuristic_table_coordinate = {
         (r, c): heuristic_fn((r, c), problem.goal)
-        for r in range(problem.maze.H) for c in range(problem.maze.W) #
+        for r in range(problem.maze.H) for c in range(problem.maze.W)
     }
 
-    # define f for A*
+    # DEFINE f FOR A* (G + H)
     def f(n: Node) -> float:
         return n.g + n.h
 
     return a_star_table_search(problem, f=f, heuristic_table_coordinate=heuristic_table_coordinate, on_step=on_step)
 
+
+# GENERATES CHILD NODES FOR A GIVEN NODE USING THE HEURISTIC TABLE
 def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
     for action in problem.actions(node.state):
         s2 = problem.result(node.state, action)
@@ -133,6 +138,8 @@ def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
         child = Node(state=s2, parent=node, action=action, h=cost, f=cost)
         yield child
 
+
+# RECONSTRUCTS THE PATH FROM GOAL NODE TO START NODE
 def reconstruct_path(node: Node):
     path = []
     while node:

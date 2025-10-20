@@ -1,5 +1,6 @@
 from typing import List, Tuple, Dict
 
+# READS A MATRIX FROM A TEXT FILE AND RETURNS IT AS A LIST OF LISTS
 def read_matrix_from_file(file_path: str) -> List[List[str]]:
     with open(file_path, "r") as f:
         lines = [line.rstrip("\n") for line in f.readlines() if line.strip() != ""]
@@ -7,6 +8,7 @@ def read_matrix_from_file(file_path: str) -> List[List[str]]:
     return matrix
 
 
+# GENERATES A GRAPH FROM A MATRIX USING 4-DIRECTIONAL MOVEMENT
 def generate_graph_from_matrix(matrix: List[List[str]]) -> Dict[Tuple[int, int], list]:
     walkable = {".", "S", "G"}
     rows = len(matrix)

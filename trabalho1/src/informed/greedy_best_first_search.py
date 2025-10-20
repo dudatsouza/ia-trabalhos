@@ -1,18 +1,33 @@
-from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+# EXTERNAL IMPORTS
+import heapq
 from typing import Optional, Tuple, Callable
+
+# INTERNAL PROJECT IMPORTS
+# CORE
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
 from core.problem import Problem
 from core.node import Node
-from search.measure_time_memory import measure_time_memory
-import heapq
 
+# SEARCH
+from search.measure_time_memory import measure_time_memory
+
+
+# COMPUTES GREEDY BEST-FIRST SEARCH USING SPECIFIED HEURISTIC
 def compute_greedy_best_first_search(problem: Problem, heuristic: str):
-    # For each Coord (Position) in the maze, map to its heuristic value
+    # BUILD HEURISTIC TABLE FOR ALL COORDINATES
     heuristic_table_coordinate = {
-        (x, y): problem.heuristic((x, y), problem.goal, function_h=
-            h_manhattan_distance if heuristic == "manhattan" else  h_euclidean_distance if heuristic == "euclidean" else h_octile_distance if heuristic == "octile" else h_chebyshev_distance)
+        (x, y): problem.heuristic(
+            (x, y),
+            problem.goal,
+            function_h=h_manhattan_distance if heuristic == "manhattan" else
+                       h_euclidean_distance if heuristic == "euclidean" else
+                       h_octile_distance if heuristic == "octile" else
+                       h_chebyshev_distance
+        )
         for x in range(problem.maze.W) for y in range(problem.maze.H)
     }
 
+    # RUN GREEDY BEST-FIRST SEARCH AND MEASURE TIME/MEMORY
     result, elapsed_time, memory_used, current, peak = measure_time_memory(
         greedy_best_first_search, problem, lambda n: n.h, heuristic_table_coordinate
     )
@@ -32,8 +47,11 @@ def compute_greedy_best_first_search(problem: Problem, heuristic: str):
         print(f"Memory used: {memory_used:.12f} B")
         print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
-def greedy_best_first_search(problem: Problem, f: Callable[[Node], float], heuristic_table_coordinate: dict, on_step: Callable[[dict], None] | None = None) -> Optional[Tuple[Node, int]]:
-    # print(heuristic_table_coordinate[problem.initial])
+
+# GREEDY BEST-FIRST SEARCH USING PRECOMPUTED HEURISTIC TABLE
+def greedy_best_first_search(problem: Problem, f: Callable[[Node], float],
+                             heuristic_table_coordinate: dict,
+                             on_step: Callable[[dict], None] | None = None) -> Optional[Tuple[Node, int]]:
     start = Node(state=problem.initial, f=heuristic_table_coordinate[problem.initial], h=heuristic_table_coordinate[problem.initial])
     frontier = []
     heapq.heappush(frontier, (f(start), start))
@@ -43,11 +61,10 @@ def greedy_best_first_search(problem: Problem, f: Callable[[Node], float], heuri
     while frontier:
         _, node = heapq.heappop(frontier)
         if problem.is_goal(node.state):
-            # return goal node, expanded count and path cost
             return node, nodes_expanded
 
+        # EXPAND CHILDREN
         for child in expand(problem, node, heuristic_table_coordinate):
-            # emit snapshot before expanding a node
             if on_step:
                 snapshot = {
                     'current': node.state,
@@ -63,7 +80,6 @@ def greedy_best_first_search(problem: Problem, f: Callable[[Node], float], heuri
                 heapq.heappush(frontier, (f(child), child))
                 nodes_expanded += 1
 
-                # emit snapshot when pushing a child
                 if on_step:
                     snapshot = {
                         'current': child.state,
@@ -75,6 +91,8 @@ def greedy_best_first_search(problem: Problem, f: Callable[[Node], float], heuri
                     on_step(snapshot)
     return None
 
+
+# GENERATES CHILD NODES FOR A GIVEN NODE USING THE HEURISTIC TABLE
 def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
     for action in problem.actions(node.state):
         s2 = problem.result(node.state, action)
@@ -82,6 +100,8 @@ def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
         child = Node(state=s2, parent=node, action=action, h=cost, f=cost)
         yield child
 
+
+# RECONSTRUCTS PATH FROM GOAL NODE TO START NODE
 def reconstruct_path(node: Node):
     path = []
     while node:

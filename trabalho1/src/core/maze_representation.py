@@ -4,12 +4,8 @@ Grid = List[List[str]]
 Pos = Tuple[int, int]
 
 
+# REPRESENTS THE STATE SPACE FOR THE MAZE PROBLEM
 class Maze:
-    """Representa o espao de estados para o problema do labirinto.
-
-    Conven
-    """
-
     def __init__(self, grid: Grid):
         self.grid = grid
         self.H = len(grid)
@@ -17,6 +13,7 @@ class Maze:
         self.start = self._find('S')
         self.goal = self._find('G')
 
+    # FINDS THE POSITION OF A GIVEN CHARACTER IN THE GRID
     def _find(self, ch: str) -> Pos:
         for r in range(self.H):
             for c in range(self.W):
@@ -24,16 +21,18 @@ class Maze:
                     return (r, c)
         raise ValueError(f"Caractere '{ch}' no encontrado no grid")
 
+    # CHECKS IF A POSITION IS WITHIN MAZE BOUNDS
     def in_bounds(self, p: Pos) -> bool:
         r, c = p
         return 0 <= r < self.H and 0 <= c < self.W
 
+    # CHECKS IF A POSITION IS PASSABLE (NOT A WALL)
     def passable(self, p: Pos) -> bool:
         r, c = p
         return self.grid[r][c] != '#'
 
+    # RETURNS POSSIBLE ACTIONS FROM A GIVEN POSITION
     def actions(self, p: Pos):
-        """Retorna a lista de ade validat in p. Ex.: ['N','S','O','L']"""
         acts = []
         r, c = p
         candidates = {
@@ -48,8 +47,8 @@ class Maze:
                 acts.append(a)
         return acts
 
+    # RETURNS THE RESULTING POSITION AFTER APPLYING AN ACTION
     def result(self, p: Pos, a: str) -> Pos:
-        """Funde transi T(p,a)."""
         r, c = p
         delta = {'N':(-1,0), 'S':(1,0), 'O':(0,-1), 'L':(0,1)}
         dr, dc = delta[a]
@@ -58,30 +57,30 @@ class Maze:
             raise ValueError('A invalida em p')
         return q
 
+    # RETURNS THE COST OF A SINGLE STEP (DEFAULT = 1)
     def step_cost(self, p: Pos, a: str, q: Pos) -> float:
-        """Custo de passo. Por padr, custo unit."""
         return 1.0
 
+    # CHECKS IF THE CURRENT POSITION IS THE GOAL
     def goal_test(self, p: Pos) -> bool:
         return p == self.goal
 
-    # --- Additional helpers (safe to add) ---------------------------------
+    # CREATES A MAZE INSTANCE FROM A TEXT FILE
     @classmethod
     def from_file(cls, file_path: str) -> 'Maze':
-        """Create a Maze instance from a text file (lines of chars)."""
         with open(file_path, 'r') as f:
             lines = [line.rstrip('\n') for line in f.readlines() if line.strip() != '']
         grid = [list(line) for line in lines]
         return cls(grid)
 
+    # RETURNS NEIGHBOR COORDINATES OF A GIVEN POSITION
     def neighbors_coords(self, p: Pos):
-        """Return list of neighbor coordinates (instead of direction labels)."""
         r, c = p
         candidates = [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]
         return [q for q in candidates if self.in_bounds(q) and self.passable(q)]
 
+    # CONVERTS THE MAZE TO AN ADJACENCY GRAPH
     def to_graph(self):
-        """Return adjacency dict mapping (r,c) -> list[(r,c)] for walkable cells."""
         graph = {}
         for r in range(self.H):
             for c in range(self.W):
@@ -89,6 +88,7 @@ class Maze:
                     graph[(r, c)] = self.neighbors_coords((r, c))
         return graph
 
+    # PRINTS THE MAZE IN A READABLE FORMAT
     def pretty_print(self):
         for row in self.grid:
             print(''.join(row))

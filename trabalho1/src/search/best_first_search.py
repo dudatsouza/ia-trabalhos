@@ -1,8 +1,16 @@
+# EXTERNAL IMPORTS
+import heapq
 from typing import Callable, Optional, Tuple
+
+# INTERNAL PROJECT IMPORTS
+# CORE
 from core.problem import Problem
 from core.node import Node
-import heapq
 
+# SEARCH
+# (NONE NEEDED FOR THIS FILE)
+
+# FUNCTION TO PERFORM BEST-FIRST SEARCH WITH OPTIONAL SNAPSHOT CALLBACK
 def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Callable[[dict], None] | None = None) -> Optional[Tuple[Node, int]]:
     start = Node(state=problem.initial, g=0.0, h=problem.heuristic(problem.initial, problem.goal))
     frontier = []
@@ -13,11 +21,11 @@ def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Cal
     while frontier:
         _, node = heapq.heappop(frontier)
         if problem.is_goal(node.state):
-            # return goal node, expanded count and path cost
+            # RETURN GOAL NODE AND NUMBER OF NODES EXPANDED
             return node, nodes_expanded
 
         for child in expand(problem, node):
-            # emit snapshot before expanding a node
+            # EMIT SNAPSHOT BEFORE EXPANDING A NODE
             if on_step:
                 snapshot = {
                     'current': node.state,
@@ -33,7 +41,7 @@ def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Cal
                 heapq.heappush(frontier, (f(child), child))
                 nodes_expanded += 1
 
-                # emit snapshot when pushing a child
+                # EMIT SNAPSHOT WHEN PUSHING A CHILD
                 if on_step:
                     snapshot = {
                         'current': child.state,
@@ -45,6 +53,7 @@ def best_first_search(problem: Problem, f: Callable[[Node], float], on_step: Cal
                     on_step(snapshot)
     return None
 
+# FUNCTION TO GENERATE CHILD NODES FROM CURRENT NODE
 def expand(problem: Problem, node: Node):
     for action in problem.actions(node.state):
         s2 = problem.result(node.state, action)
@@ -52,6 +61,7 @@ def expand(problem: Problem, node: Node):
         child = Node(state=s2, parent=node, action=action, g=cost, h=problem.heuristic(s2, problem.goal))
         yield child
 
+# FUNCTION TO RECONSTRUCT PATH FROM GOAL NODE TO INITIAL STATE
 def reconstruct_path(node: Node):
     path = []
     while node:

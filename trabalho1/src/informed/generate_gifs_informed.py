@@ -1,13 +1,22 @@
+# EXTERNAL IMPORTS
 from typing import Callable
 import os
-from core.maze_generator import read_matrix_from_file
+import tempfile
+
+# INTERNAL PROJECT IMPORTS
+# CORE
 from core.maze_representation import Maze
 from core.maze_problem import MazeProblem
 from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
-from informed.greedy_best_first_search import greedy_best_first_search, reconstruct_path
-from informed.a_star_search import a_star_table_search
 from core.problem import Problem
 
+# INFORMED SEARCH
+from informed.greedy_best_first_search import greedy_best_first_search, reconstruct_path
+from informed.a_star_search import a_star_table_search
+import search.visualize_matrix as visualize_matrix
+
+
+# COLLECTS ALL UNIQUE NODES FROM SNAPSHOTS FOR VISUALIZATION
 def _collect_tree_nodes(snapshots):
     nodes = set()
     for snap in snapshots:
@@ -18,36 +27,34 @@ def _collect_tree_nodes(snapshots):
                 nodes.update(tuple(state) for state in snap[key])
     return nodes
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
 
-
+# GENERATES GIFS FOR INFORMED SEARCH (GREEDY OR A*) WITH SNAPSHOT COLLECTION
 def generate_gifs_informed(problem: Problem, matrix, heuristic: str = "manhattan", algorithm: str = "greedy", interval_ms: int | None = 100, out_file: str | None = None):
-    # Collect snapshots emitted by the search
-    # import visualize_matrix from the top-level package 'search' (works when PYTHONPATH='src')
-    import search.visualize_matrix as visualize_matrix
-
+    
     snapshots = []
 
+    # CALLBACK TO COLLECT SNAPSHOTS DURING SEARCH
     def on_step(snapshot):
-        # Keep the greedy snapshot structure (visualizer understands these keys)
         snapshots.append(snapshot.copy())
 
-    # Build heuristic table using (row, col) ordering to match Maze (H rows, W cols)
+    # BUILD HEURISTIC TABLE MATCHING MAZE COORDINATES
     heuristic_table_coordinate = {
-        (r, c): problem.heuristic((r, c), problem.goal, function_h=
-            h_manhattan_distance if heuristic == "manhattan" else  h_euclidean_distance if heuristic == "euclidean" else h_octile_distance if heuristic == "octile" else h_chebyshev_distance)
+        (r, c): problem.heuristic(
+            (r, c),
+            problem.goal,
+            function_h=h_manhattan_distance if heuristic == "manhattan" else
+                       h_euclidean_distance if heuristic == "euclidean" else
+                       h_octile_distance if heuristic == "octile" else
+                       h_chebyshev_distance
+        )
         for r in range(problem.maze.H) for c in range(problem.maze.W)
     }
 
-    # debug printing removed or left minimal
-    # print(heuristic_table_coordinate)
-
-    # Run the chosen informed search with the callback to collect snapshots
     result = None
+    # RUN THE SELECTED INFORMED SEARCH ALGORITHM
     if algorithm.lower() in ("greedy", "greedy_best_first", "greedy_bfs"):
         result = greedy_best_first_search(problem, f=lambda n: n.f, heuristic_table_coordinate=heuristic_table_coordinate, on_step=on_step)
     elif algorithm.lower() in ("astar", "a*", "a_star"):
-        # A* table-based variant: f = g + h_table
         result = a_star_table_search(problem, f=lambda n: n.g + n.h, heuristic_table_coordinate=heuristic_table_coordinate, on_step=on_step)
     else:
         print(f"Unknown algorithm '{algorithm}', supported: greedy, a_star")
@@ -57,11 +64,12 @@ def generate_gifs_informed(problem: Problem, matrix, heuristic: str = "manhattan
         print('No path found')
         return None
     solution, nodes_expanded = result
+
     if not snapshots:
         print('No snapshots were produced for visualization.')
         return None
 
-    # Use provided interval_ms (if None, fall back to interactive prompt)
+    # DETERMINE FRAME INTERVAL
     if interval_ms is None:
         interval_str = input('Frame interval in ms (press Enter for 100, higher = slower): ').strip()
         try:
@@ -72,17 +80,15 @@ def generate_gifs_informed(problem: Problem, matrix, heuristic: str = "manhattan
             print('Invalid interval, using 100ms.')
             interval_ms = 100
 
-    # Determine output path
+    # DETERMINE OUTPUT FILE PATH
     if out_file:
         out_path = out_file
     else:
-        # default name depends on algorithm and heuristic
         alg_name = 'a_star' if algorithm.lower() in ('astar', 'a*', 'a_star') else 'greedy'
+        script_dir = os.path.dirname(os.path.abspath(__file__))
         out_path = os.path.join(script_dir, '../..', f'visualization-{alg_name}-{heuristic}.gif')
 
-    # Write the provided matrix to a temporary maze file so the visualizer uses
-    # the same maze that was selected in the GUI (instead of a hardcoded file).
-    import tempfile
+    # WRITE MATRIX TO TEMPORARY FILE FOR VISUALIZER
     tmp = None
     try:
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as tf:
@@ -103,6 +109,7 @@ def generate_gifs_informed(problem: Problem, matrix, heuristic: str = "manhattan
             out_file=out_path,
         )
     finally:
+        # CLEANUP TEMPORARY FILE
         try:
             if tmp and os.path.exists(tmp):
                 os.unlink(tmp)
