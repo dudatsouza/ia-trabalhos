@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List
 import tempfile
 
-# Imports corrigidos para a estrutura do projeto
 from core.maze_representation import Maze
 from core.maze_problem import MazeProblem
 from uninformed.bidirectional_best_first_search import bidirectional_best_first_search

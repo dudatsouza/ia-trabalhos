@@ -580,12 +580,12 @@ class App(tk.Tk):
                 self.safe_write_output(f"Erro ao executar a comparação: {e}\n")
                 return
             
-            # --- 3. Função de tabela MODIFICADA para 9 colunas ---
+            # --- 3. Função de tabela MODIFICADA para 7 métricas ---
             def show_table_comparison(title, metrics):
                 win = Toplevel(self)
                 win.title(title)
-                # Aumentar o tamanho da janela para caber 8 colunas de dados
-                win.geometry("1050x260") 
+                # Aumentar o tamanho da janela para caber as 7 métricas
+                win.geometry("1050x380") # Ajustado de 260 para 380 de altura
 
                 cols = ("Métrica", 
                         "A*-Manhattan", "A*-Euclidean", "A*-Octile", "A*-Chebyshev",
@@ -605,7 +605,7 @@ class App(tk.Tk):
                 
                 tree.pack(expand=True, fill='both', padx=10, pady=10)
 
-                # --- Inserir todas as métricas na tabela (linhas expandidas) ---
+                # --- Inserir todas as 7 métricas na tabela ---
                 tree.insert("", "end", values=("Tempo médio (ms)", 
                                             metrics['A*-Manhattan avg time (ms)'], 
                                             metrics['A*-Euclidean avg time (ms)'], 
@@ -615,6 +615,7 @@ class App(tk.Tk):
                                             metrics['Greedy-Euclidean avg time (ms)'],
                                             metrics['Greedy-Octile avg time (ms)'],
                                             metrics['Greedy-Chebyshev avg time (ms)']))
+                
                 tree.insert("", "end", values=("Nós médios", 
                                             metrics['A*-Manhattan avg nodes'], 
                                             metrics['A*-Euclidean avg nodes'], 
@@ -624,6 +625,7 @@ class App(tk.Tk):
                                             metrics['Greedy-Euclidean avg nodes'],
                                             metrics['Greedy-Octile avg nodes'],
                                             metrics['Greedy-Chebyshev avg nodes']))
+                
                 tree.insert("", "end", values=("Custo médio", 
                                             metrics['A*-Manhattan avg cost'], 
                                             metrics['A*-Euclidean avg cost'], 
@@ -633,6 +635,7 @@ class App(tk.Tk):
                                             metrics['Greedy-Euclidean avg cost'],
                                             metrics['Greedy-Octile avg cost'],
                                             metrics['Greedy-Chebyshev avg cost']))
+                
                 tree.insert("", "end", values=("Memória Peak (KB)", 
                                             metrics['A*-Manhattan avg peak (KB)'], 
                                             metrics['A*-Euclidean avg peak (KB)'], 
@@ -642,6 +645,27 @@ class App(tk.Tk):
                                             metrics['Greedy-Euclidean avg peak (KB)'],
                                             metrics['Greedy-Octile avg peak (KB)'],
                                             metrics['Greedy-Chebyshev avg peak (KB)']))
+                
+                tree.insert("", "end", values=("Memória Current (KB)", 
+                                            metrics['A*-Manhattan avg current (KB)'], 
+                                            metrics['A*-Euclidean avg current (KB)'], 
+                                            metrics['A*-Octile avg current (KB)'],
+                                            metrics['A*-Chebyshev avg current (KB)'],
+                                            metrics['Greedy-Manhattan avg current (KB)'], 
+                                            metrics['Greedy-Euclidean avg current (KB)'],
+                                            metrics['Greedy-Octile avg current (KB)'],
+                                            metrics['Greedy-Chebyshev avg current (KB)']))
+                
+                tree.insert("", "end", values=("Memória RSS (B)", 
+                                            metrics['A*-Manhattan avg memory (B)'], 
+                                            metrics['A*-Euclidean avg memory (B)'], 
+                                            metrics['A*-Octile avg memory (B)'],
+                                            metrics['A*-Chebyshev avg memory (B)'],
+                                            metrics['Greedy-Manhattan avg memory (B)'], 
+                                            metrics['Greedy-Euclidean avg memory (B)'],
+                                            metrics['Greedy-Octile avg memory (B)'],
+                                            metrics['Greedy-Chebyshev avg memory (B)']))
+
                 tree.insert("", "end", values=("Encontrado", 
                                             metrics['A*-Manhattan found count'], 
                                             metrics['A*-Euclidean found count'], 

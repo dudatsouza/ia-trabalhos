@@ -1,4 +1,4 @@
-from core.heuristics import h_manhattan_distance, h_euclidean_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
 from typing import Optional, Tuple, Callable
 from core.problem import Problem
 from core.node import Node
@@ -9,7 +9,7 @@ def compute_greedy_best_first_search(problem: Problem, heuristic: str):
     # For each Coord (Position) in the maze, map to its heuristic value
     heuristic_table_coordinate = {
         (x, y): problem.heuristic((x, y), problem.goal, function_h=
-            h_manhattan_distance if heuristic == "manhattan" else h_euclidean_distance)
+            h_manhattan_distance if heuristic == "manhattan" else  h_euclidean_distance if heuristic == "euclidean" else h_octile_distance if heuristic == "octile" else h_chebyshev_distance)
         for x in range(problem.maze.W) for y in range(problem.maze.H)
     }
 

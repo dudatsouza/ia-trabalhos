@@ -1,8 +1,46 @@
-from typing import Callable, Optional, Tuple, List, Dict
-import heapq
-
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+from typing import Optional, Tuple, Callable, Dict
 from core.problem import Problem
 from core.node import Node
+from search.measure_time_memory import measure_time_memory
+import heapq
+
+def compute_a_star_search(problem: Problem, heuristic: str):
+    # 1. Construir a tabela de heurística (seu código está aqui)
+    heuristic_table_coordinate = {
+        (x, y): problem.heuristic((x, y), problem.goal, function_h=
+            h_manhattan_distance if heuristic == "manhattan" else  h_euclidean_distance if heuristic == "euclidean" else h_octile_distance if heuristic == "octile" else h_chebyshev_distance)
+        for x in range(problem.maze.W) for y in range(problem.maze.H)
+    }
+
+    # 2. Definir a função f CORRETA para A*
+    f_astar = lambda n: n.g + n.h 
+
+    # 3. Chamar 'a_star_table_search' (NÃO 'a_star_search')
+    # A assinatura de a_star_table_search é: (problem, f, heuristic_table_coordinate, on_step)
+    # Nós omitimos 'on_step' (passando None)
+    result, elapsed_time, memory_used, current, peak = measure_time_memory(
+        a_star_table_search,      # <--- MUDANÇA AQUI
+        problem,
+        f_astar,                  # <--- MUDANÇA AQUI (g + h)
+        heuristic_table_coordinate
+    )
+
+    if result is None:
+        print("No path found")
+        return
+    
+    goal_node, nodes_expanded = result
+
+    if goal_node:
+        path = reconstruct_path(goal_node)
+        print("Path:", path)
+        print("Number of nodes expanded:", nodes_expanded)
+        # 4. Corrigir o Custo: O custo real é 'g', não 'f'
+        print("Cost of path:", goal_node.g) # <--- MUDANÇA AQUI
+        print(f"Time taken: {elapsed_time:.3f} milliseconds")
+        print(f"Memory used: {memory_used:.12f} B")
+        print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
 
 def a_star_table_search(problem: Problem, f: Callable[[Node], float], heuristic_table_coordinate: Dict[tuple, float], on_step: Optional[Callable[[dict], None]] = None) -> Optional[Tuple[Node, int]]:
@@ -78,8 +116,8 @@ def a_star_search(problem: Problem, h: Optional[Callable[[any, any], float]] = N
         heuristic_fn = lambda s, goal: problem.heuristic(s, goal)
 
     heuristic_table_coordinate = {
-        (x, y): heuristic_fn((x, y), problem.goal)
-        for x in range(problem.maze.W) for y in range(problem.maze.H)
+        (r, c): heuristic_fn((r, c), problem.goal)
+        for r in range(problem.maze.H) for c in range(problem.maze.W) #
     }
 
     # define f for A*
@@ -87,3 +125,17 @@ def a_star_search(problem: Problem, h: Optional[Callable[[any, any], float]] = N
         return n.g + n.h
 
     return a_star_table_search(problem, f=f, heuristic_table_coordinate=heuristic_table_coordinate, on_step=on_step)
+
+def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
+    for action in problem.actions(node.state):
+        s2 = problem.result(node.state, action)
+        cost = heuristic_table_coordinate[s2]
+        child = Node(state=s2, parent=node, action=action, h=cost, f=cost)
+        yield child
+
+def reconstruct_path(node: Node):
+    path = []
+    while node:
+        path.append(node.state)
+        node = node.parent
+    return list(reversed(path))

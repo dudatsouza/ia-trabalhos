@@ -3,7 +3,7 @@ import os
 from core.maze_generator import read_matrix_from_file
 from core.maze_representation import Maze
 from core.maze_problem import MazeProblem
-from core.heuristics import h_manhattan_distance, h_euclidean_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
 from informed.greedy_best_first_search import greedy_best_first_search, reconstruct_path
 from informed.a_star_search import a_star_table_search
 from core.problem import Problem
@@ -35,7 +35,7 @@ def generate_gifs_informed(problem: Problem, matrix, heuristic: str = "manhattan
     # Build heuristic table using (row, col) ordering to match Maze (H rows, W cols)
     heuristic_table_coordinate = {
         (r, c): problem.heuristic((r, c), problem.goal, function_h=
-            h_manhattan_distance if heuristic == "manhattan" else h_euclidean_distance)
+            h_manhattan_distance if heuristic == "manhattan" else  h_euclidean_distance if heuristic == "euclidean" else h_octile_distance if heuristic == "octile" else h_chebyshev_distance)
         for r in range(problem.maze.H) for c in range(problem.maze.W)
     }
 
