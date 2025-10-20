@@ -1,5 +1,7 @@
 # EXTERNAL IMPORTS
 import statistics
+from pathlib import Path
+import json
 
 # INTERNAL PROJECT IMPORTS
 # UNINFORMED SEARCH
@@ -13,6 +15,9 @@ from core.maze_representation import Maze
 # SEARCH
 from search.best_first_search import best_first_search
 from search.measure_time_memory import measure_time_memory
+
+# COMPARISON 
+from comparisons.uninformed_plots import plot_uninformed_metrics
 
 
 # COMPARE DIJKSTRA AND BIDIRECTIONAL BEST-FIRST SEARCH
@@ -117,4 +122,21 @@ def compare_uninformed_search_algorithms(matrix):
         'Bidirectional found count': f"{bid_bfs_total_path_found}/15",
         'Bidirectional avg cost': f"{avg_bid_bfs_costs:.3f}",
     }
+
+    output_filename = '././data/output/metrics/metrics_uninformed.json'
+
+    with open(output_filename, 'w', encoding='utf-8') as f:
+        json.dump(metrics, f, indent=4, ensure_ascii=False)
+
+    print(f"Métricas salvas em {output_filename}")
+
+    current_file = Path(__file__).resolve()
+    repo_root = current_file.parents[2]
+    
+    example_path = repo_root / 'data' / 'output' / 'metrics' / 'metrics_uninformed.json'    
+    if example_path.exists():
+        plot_uninformed_metrics(metrics)
+    else:
+        print("EXAMPLE METRICS JSON NOT FOUND:", example_path)
+
     return metrics

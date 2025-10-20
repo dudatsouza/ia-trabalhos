@@ -3,6 +3,7 @@ import statistics
 import sys
 from pathlib import Path
 from typing import Dict, Any, Callable, List
+import json
 
 # INTERNAL PROJECT IMPORTS
 # CORE
@@ -17,6 +18,9 @@ from informed.greedy_best_first_search import greedy_best_first_search, reconstr
 
 # SEARCH 
 from search.measure_time_memory import measure_time_memory
+
+# COMPARISON 
+from comparisons.informed_plots import plot_informed_metrics
 
 
 def compare_informed_search_algorithms(matrix: List[List[str]], num_runs: int = 15) -> Dict[str, str]:
@@ -113,4 +117,21 @@ def compare_informed_search_algorithms(matrix: List[List[str]], num_runs: int = 
         metrics[f'{key} avg memory (B)'] = f"{avg_memory:.3f}"
         metrics[f'{key} avg current (KB)'] = f"{(avg_current / 1024):.3f}"
     
+    output_filename = '././data/output/metrics/metrics_informed.json'
+
+    with open(output_filename, 'w', encoding='utf-8') as f:
+        json.dump(metrics, f, indent=4, ensure_ascii=False)
+
+    print(f"Métricas salvas em {output_filename}")
+
+    current_file = Path(__file__).resolve()
+    repo_root = current_file.parents[2]
+    
+    example_path = repo_root / 'data' / 'output' / 'metrics' / 'metrics_informed.json'    
+    if example_path.exists():
+        plot_informed_metrics(metrics)
+    else:
+        print("EXAMPLE METRICS JSON NOT FOUND:", example_path)
+
+
     return metrics
