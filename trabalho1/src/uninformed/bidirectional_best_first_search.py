@@ -10,9 +10,10 @@ from core.maze_problem import MazeProblem
 from core.maze_representation import Maze
 
 # SEARCH
-from search.best_first_search import expand, reconstruct_path
 from search.measure_time_memory import measure_time_memory
 
+# UNINFORMED SEARCH
+from uninformed.best_first_search import expand, reconstruct_path
 
 # BIDIRECTIONAL BEST-FIRST SEARCH COMPUTATION FUNCTION
 def compute_bidirectional_best_first_search(problem: Problem, matrix):

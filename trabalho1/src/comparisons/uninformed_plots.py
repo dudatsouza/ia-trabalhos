@@ -119,8 +119,8 @@ def plot_uninformed_time_memory(metrics: dict, out_dir: str | Path | None = None
         float(metrics.get('Bidirectional avg time (ms)', 0))
     ]
     memory_values = [
-        float(metrics.get('Dijkstra avg memory (B)', 0)) / 1024,  # convert to KB
-        float(metrics.get('Bidirectional avg memory (B)', 0)) / 1024
+        float(metrics.get('Dijkstra avg peak (KB)', 0)),
+        float(metrics.get('Bidirectional avg peak (KB)', 0))
     ]
 
     # PLOT CONFIG

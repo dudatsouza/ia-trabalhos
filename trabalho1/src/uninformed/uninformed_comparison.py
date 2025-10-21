@@ -13,12 +13,13 @@ from core.maze_problem import MazeProblem
 from core.maze_representation import Maze
 
 # SEARCH
-from search.best_first_search import best_first_search
 from search.measure_time_memory import measure_time_memory
 
 # COMPARISON 
 from comparisons.uninformed_plots import plot_uninformed_metrics
 
+# UNINFORMED SEARCH
+from uninformed.best_first_search import best_first_search
 
 # COMPARE DIJKSTRA AND BIDIRECTIONAL BEST-FIRST SEARCH
 def compare_uninformed_search_algorithms(matrix):

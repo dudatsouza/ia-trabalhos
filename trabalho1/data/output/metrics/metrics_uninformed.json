@@ -1,16 +1,16 @@
 {
-    "Dijkstra avg time (ms)": "0.481",
-    "Dijkstra avg memory (B)": "1911.467",
+    "Dijkstra avg time (ms)": "0.774",
+    "Dijkstra avg memory (B)": "0.000",
     "Dijkstra avg nodes": "45.0",
-    "Dijkstra avg current (KB)": "2.769",
-    "Dijkstra avg peak (KB)": "9.118",
+    "Dijkstra avg current (KB)": "2.780",
+    "Dijkstra avg peak (KB)": "36.402",
     "Dijkstra found count": "15/15",
     "Dijkstra avg cost": "20.000",
-    "Bidirectional avg time (ms)": "0.482",
-    "Bidirectional avg memory (B)": "1638.400",
+    "Bidirectional avg time (ms)": "0.472",
+    "Bidirectional avg memory (B)": "0.000",
     "Bidirectional avg nodes": "39.0",
     "Bidirectional avg current (KB)": "3.898",
-    "Bidirectional avg peak (KB)": "10.467",
+    "Bidirectional avg peak (KB)": "37.520",
     "Bidirectional found count": "15/15",
     "Bidirectional avg cost": "20.000"
 }

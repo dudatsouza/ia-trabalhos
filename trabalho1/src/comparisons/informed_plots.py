@@ -170,13 +170,13 @@ def plot_informed_time_memory(metrics: dict, out_dir: str | Path | None = None):
 
     # DEFINE ALGORITHMS AND HEURISTICS (ALL 4 HEURISTICS)
     algorithms = [
-        ('A*-Manhattan',   metrics.get('A*-Manhattan avg time (ms)', 0),   metrics.get('A*-Manhattan avg memory (B)', 0)),
-        ('A*-Euclidean',   metrics.get('A*-Euclidean avg time (ms)', 0),   metrics.get('A*-Euclidean avg memory (B)', 0)),
-        ('A*-Inadmissible', metrics.get('A*-Inadmissible avg time (ms)', 0), metrics.get('A*-Inadmissible avg memory (B)', 0)),
+        ('A*-Manhattan',   metrics.get('A*-Manhattan avg time (ms)', 0),   metrics.get('A*-Manhattan avg peak (KB)', 0)),
+        ('A*-Euclidean',   metrics.get('A*-Euclidean avg time (ms)', 0),   metrics.get('A*-Euclidean avg peak (KB)', 0)),
+        ('A*-Inadmissible', metrics.get('A*-Inadmissible avg time (ms)', 0), metrics.get('A*-Inadmissible avg peak (KB)', 0)),
 
-        ('Greedy-Manhattan', metrics.get('Greedy-Manhattan avg time (ms)', 0), metrics.get('Greedy-Manhattan avg memory (B)', 0)),
-        ('Greedy-Euclidean', metrics.get('Greedy-Euclidean avg time (ms)', 0), metrics.get('Greedy-Euclidean avg memory (B)', 0)),
-        ('Greedy-Inadmissible', metrics.get('Greedy-Inadmissible avg time (ms)', 0), metrics.get('Greedy-Inadmissible avg memory (B)', 0))
+        ('Greedy-Manhattan', metrics.get('Greedy-Manhattan avg time (ms)', 0), metrics.get('Greedy-Manhattan avg peak (KB)', 0)),
+        ('Greedy-Euclidean', metrics.get('Greedy-Euclidean avg time (ms)', 0), metrics.get('Greedy-Euclidean avg peak (KB)', 0)),
+        ('Greedy-Inadmissible', metrics.get('Greedy-Inadmissible avg time (ms)', 0), metrics.get('Greedy-Inadmissible avg peak (KB)', 0))
     ]
 
     # PREPARE PLOT

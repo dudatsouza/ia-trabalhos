@@ -7,9 +7,10 @@ from core.problem import Problem
 from core.node import Node
 
 # SEARCH
-from search.best_first_search import best_first_search, reconstruct_path
 from search.measure_time_memory import measure_time_memory
 
+# UNINFORMED SEARCH
+from uninformed.best_first_search import best_first_search, reconstruct_path
 
 # DIJKSTRA SEARCH COMPUTATION FUNCTION
 def compute_dijkstra(problem: Problem):

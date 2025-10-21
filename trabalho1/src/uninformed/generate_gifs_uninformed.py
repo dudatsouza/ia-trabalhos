@@ -13,9 +13,9 @@ from core.problem import Problem
 # UNINFORMED SEARCH
 from uninformed.bidirectional_best_first_search import bidirectional_best_first_search
 from uninformed.dijkstra import dijkstra
+from uninformed.best_first_search import reconstruct_path
 
 # SEARCH
-from search.best_first_search import reconstruct_path
 from search import visualize_matrix
 
 

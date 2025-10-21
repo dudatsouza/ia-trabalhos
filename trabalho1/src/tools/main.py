@@ -1,7 +1,11 @@
 # EXTERNAL IMPORTS
-import os
+import os, sys
 from pathlib import Path
 import traceback                 
+
+# ADJUST SYSTEM PATH TO INCLUDE THE SRC FOLDER FOR MODULE RESOLUTION
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, src_path)
 
 # INTERNAL PROJECT IMPORTS
 # CORE

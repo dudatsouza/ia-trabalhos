@@ -25,10 +25,10 @@ from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_inadmi
 
 # SEARCH
 from search.measure_time_memory import measure_time_memory
-from search.best_first_search import reconstruct_path
 
 # UNINFORMED SEARCH
 from uninformed.dijkstra import dijkstra
+from uninformed.best_first_search import reconstruct_path
 from uninformed.bidirectional_best_first_search import bidirectional_best_first_search
 from uninformed.generate_gifs_uninformed import generate_gifs_uninformed
 from uninformed.uninformed_comparison import compare_uninformed_search_algorithms
