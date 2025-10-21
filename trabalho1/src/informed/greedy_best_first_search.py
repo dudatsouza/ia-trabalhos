@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Callable
 
 # INTERNAL PROJECT IMPORTS
 # CORE
-from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_inadmissible
 from core.problem import Problem
 from core.node import Node
 
@@ -21,8 +21,7 @@ def compute_greedy_best_first_search(problem: Problem, heuristic: str):
             problem.goal,
             function_h=h_manhattan_distance if heuristic == "manhattan" else
                        h_euclidean_distance if heuristic == "euclidean" else
-                       h_octile_distance if heuristic == "octile" else
-                       h_chebyshev_distance
+                       h_inadmissible
         )
         for x in range(problem.maze.W) for y in range(problem.maze.H)
     }
@@ -97,7 +96,8 @@ def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
     for action in problem.actions(node.state):
         s2 = problem.result(node.state, action)
         cost = heuristic_table_coordinate[s2]
-        child = Node(state=s2, parent=node, action=action, h=cost, f=cost)
+        path_cost = problem.action_cost(node.state, action, s2)
+        child = Node(state=s2, parent=node, action=action, h=cost, f=cost, g=(node.g + path_cost))
         yield child
 
 

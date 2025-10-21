@@ -10,12 +10,18 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+# PATH CONFIGURATION
+
+# ADJUST SYSTEM PATH TO INCLUDE THE SRC FOLDER FOR MODULE RESOLUTION
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, src_path)
+
 # INTERNAL PROJECT IMPORTS
 # CORE
 from core.maze_generator import read_matrix_from_file
 from core.maze_representation import Maze
 from core.maze_problem import MazeProblem
-from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_inadmissible
 
 # SEARCH
 from search.measure_time_memory import measure_time_memory
@@ -32,12 +38,6 @@ from informed.a_star_search import a_star_search
 from informed.greedy_best_first_search import greedy_best_first_search
 from informed.generate_gifs_informed import generate_gifs_informed
 from informed.informed_comparison import compare_informed_search_algorithms
-
-# PATH CONFIGURATION
-
-# ADJUST SYSTEM PATH TO INCLUDE THE SRC FOLDER FOR MODULE RESOLUTION
-src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, src_path)
 
 # GUI APPLICATION CLASS
 
@@ -58,7 +58,7 @@ class App(tk.Tk):
         # --- FILE PATH CONFIGURATION ---
         # LOCATE THE DEFAULT MAZE FILE RELATIVE TO THIS SCRIPT'S LOCATION
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.default_maze_path = os.path.join(script_dir, '..', '..', 'data', 'input', 'maze-9.txt')
+        self.default_maze_path = os.path.join(script_dir, '..', '..', 'data', 'input', 'maze.txt')
 
         # --- DETECT INFORMED SEARCH IMPLEMENTATIONS ---
         # CHECK IF ALGORITHM FILES EXIST AND ARE NOT EMPTY TO ENABLE/DISABLE BUTTONS
@@ -184,8 +184,7 @@ class App(tk.Tk):
         ttk.Label(w, text=f"Choose heuristic for {algorithm}:").pack(padx=10, pady=8)
         ttk.Button(w, text="Manhattan Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'manhattan')]).pack(fill=tk.X, padx=8, pady=4)
         ttk.Button(w, text="Euclidean Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'euclidean')]).pack(fill=tk.X, padx=8, pady=4)
-        ttk.Button(w, text="Octile Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'octile')]).pack(fill=tk.X, padx=8, pady=4)
-        ttk.Button(w, text="Chebyshev Distance", command=lambda: [w.destroy(), self.run_informed(algorithm, 'chebyshev')]).pack(fill=tk.X, padx=8, pady=4)
+        ttk.Button(w, text="Inadmissible Heuristic", command=lambda: [w.destroy(), self.run_informed(algorithm, 'inadmissible')]).pack(fill=tk.X, padx=8, pady=4)
         ttk.Button(w, text="Back", command=w.destroy).pack(fill=tk.X, padx=8, pady=6)
 
     # GENERATES AND DISPLAYS THE MAZE'S GRAPH REPRESENTATION IN A NEW WINDOW.
@@ -242,8 +241,7 @@ class App(tk.Tk):
         heur_frame.pack(padx=10, pady=(0, 6))
         ttk.Radiobutton(heur_frame, text="Manhattan", variable=self._viz_informed_heur_var, value='manhattan').pack(side=tk.LEFT, padx=4)
         ttk.Radiobutton(heur_frame, text="Euclidean", variable=self._viz_informed_heur_var, value='euclidean').pack(side=tk.LEFT, padx=4)
-        ttk.Radiobutton(heur_frame, text="Octile", variable=self._viz_informed_heur_var, value='octile').pack(side=tk.LEFT, padx=4)
-        ttk.Radiobutton(heur_frame, text="Chebyshev", variable=self._viz_informed_heur_var, value='chebyshev').pack(side=tk.LEFT, padx=4)
+        ttk.Radiobutton(heur_frame, text="Inadmissible", variable=self._viz_informed_heur_var, value='inadmissible').pack(side=tk.LEFT, padx=4)
         
         # VISUALIZATION BUTTONS
         a_star_state = ' (missing)' if not self.has_a_star else ''
@@ -621,7 +619,7 @@ class App(tk.Tk):
 
         def worker():
             try:
-                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'octile': h_octile_distance, 'chebyshev': h_chebyshev_distance}
+                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'inadmissible': h_inadmissible}
                 h_fn = h_map.get(heuristic, h_manhattan_distance)
 
                 # 1. MEASURE PERFORMANCE
@@ -672,7 +670,7 @@ class App(tk.Tk):
 
         def worker():
             try:
-                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'octile': h_octile_distance, 'chebyshev': h_chebyshev_distance}
+                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'inadmissible': h_inadmissible}
                 heuristic_fn = h_map.get(heuristic, h_manhattan_distance)
                 
                 # PRE-CALCULATE HEURISTIC VALUES FOR ALL NODES
@@ -783,8 +781,8 @@ class App(tk.Tk):
                 win = Toplevel(self)
                 win.title(title)
                 win.geometry("1050x380")
-                cols = ("Metric", "A*-Manhattan", "A*-Euclidean", "A*-Octile", "A*-Chebyshev",
-                        "Greedy-Manhattan", "Greedy-Euclidean", "Greedy-Octile", "Greedy-Chebyshev")
+                cols = ("Metric", "A*-Manhattan", "A*-Euclidean", "A*-Inadmissible",
+                        "Greedy-Manhattan", "Greedy-Euclidean", "Greedy-Inadmissible")
                 tree = ttk.Treeview(win, columns=cols, show='headings')
                 for col in cols: tree.heading(col, text=col)
                 tree.column("Metric", width=140, anchor='w')
@@ -795,7 +793,7 @@ class App(tk.Tk):
                     ("Avg Peak Memory (KB)", "avg peak (KB)"), ("Avg Current Memory (KB)", "avg current (KB)"),
                     ("Avg RSS Memory (B)", "avg memory (B)"), ("Solutions Found", "found count")
                 ]
-                alg_keys = ["A*-Manhattan", "A*-Euclidean", "A*-Octile", "A*-Chebyshev", "Greedy-Manhattan", "Greedy-Euclidean", "Greedy-Octile", "Greedy-Chebyshev"]
+                alg_keys = ["A*-Manhattan", "A*-Euclidean", "A*-Inadmissible", "Greedy-Manhattan", "Greedy-Euclidean", "Greedy-Inadmissible"]
                 
                 for row_name, key_suffix in metric_keys:
                     values = [row_name] + [metrics_data[f'{alg_key} {key_suffix}'] for alg_key in alg_keys]
@@ -896,7 +894,7 @@ class App(tk.Tk):
 
             try:
                 choice = self._viz_informed_heur_var.get()
-                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'octile': h_octile_distance, 'chebyshev': h_chebyshev_distance}
+                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'inadmissible': h_inadmissible}
                 h_fn = h_map.get(choice, h_manhattan_distance)
                 
                 def run_call(): return a_star_search(self.problem, h_fn, on_step=on_step)
@@ -939,7 +937,7 @@ class App(tk.Tk):
 
             try:
                 choice = self._viz_informed_heur_var.get()
-                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'octile': h_octile_distance, 'chebyshev': h_chebyshev_distance}
+                h_map = {'manhattan': h_manhattan_distance, 'euclidean': h_euclidean_distance, 'inadmissible': h_inadmissible}
                 heuristic_fn = h_map.get(choice, h_manhattan_distance)
                 
                 heuristic_table = {
@@ -1034,8 +1032,8 @@ class App(tk.Tk):
 
                 # GENERATE GIFS
                 combos = [
-                    ('a_star', 'manhattan'), ('a_star', 'euclidean'), ('a_star', 'octile'), ('a_star', 'chebyshev'),
-                    ('greedy', 'manhattan'), ('greedy', 'euclidean'), ('greedy', 'octile'), ('greedy', 'chebyshev'),
+                    ('a_star', 'manhattan'), ('a_star', 'euclidean'), ('a_star', 'inadmissible'),
+                    ('greedy', 'manhattan'), ('greedy', 'euclidean'), ('greedy', 'inadmissible'),
                 ]
                 results = []
                 for alg, heur in combos:

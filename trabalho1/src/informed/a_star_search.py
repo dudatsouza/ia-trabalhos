@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Callable, Dict, Any
 
 # INTERNAL PROJECT IMPORTS
 # CORE
-from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_inadmissible
 from core.problem import Problem
 from core.node import Node
 
@@ -21,8 +21,8 @@ def compute_a_star_search(problem: Problem, heuristic: str):
             problem.goal,
             function_h=h_manhattan_distance if heuristic == "manhattan" else
                        h_euclidean_distance if heuristic == "euclidean" else
-                       h_octile_distance if heuristic == "octile" else
-                       h_chebyshev_distance
+                       h_inadmissible
+                       
         )
         for x in range(problem.maze.W) for y in range(problem.maze.H)
     }
@@ -66,7 +66,7 @@ def a_star_table_search(problem: Problem, f: Callable[[Node], float],
     )
     frontier = []
     heapq.heappush(frontier, (f(start), start))
-    reached = {start.state: start}
+    explored = {}
     nodes_expanded = 0
 
     while frontier:
@@ -74,7 +74,7 @@ def a_star_table_search(problem: Problem, f: Callable[[Node], float],
         if problem.is_goal(node.state):
             return node, nodes_expanded
 
-        reached_node = reached.get(node.state)
+        reached_node = explored.get(node.state)
         if reached_node is not None and reached_node is not node and reached_node.g < node.g:
             continue
 
@@ -89,15 +89,15 @@ def a_star_table_search(problem: Problem, f: Callable[[Node], float],
                 snapshot = {
                     'current': node.state,
                     'frontier': [n.state for _, n in frontier],
-                    'reached': list(reached.keys()),
+                    'reached': list(explored.keys()),
                     'event': 'expand_node',
                     'nodes_expanded': nodes_expanded,
                 }
                 on_step(snapshot)
 
-            existing = reached.get(child.state)
+            existing = explored.get(child.state)
             if existing is None or child.g < existing.g:
-                reached[child.state] = child
+                explored[child.state] = child
                 heapq.heappush(frontier, (f(child), child))
                 nodes_expanded += 1
 
@@ -105,7 +105,7 @@ def a_star_table_search(problem: Problem, f: Callable[[Node], float],
                     snapshot = {
                         'current': child.state,
                         'frontier': [n.state for _, n in frontier],
-                        'reached': list(reached.keys()),
+                        'reached': list(explored.keys()),
                         'event': 'push_child',
                         'nodes_expanded': nodes_expanded,
                     }
@@ -128,16 +128,6 @@ def a_star_search(problem: Problem, h: Optional[Callable[[Any, Any], float]] = N
         return n.g + n.h
 
     return a_star_table_search(problem, f=f, heuristic_table_coordinate=heuristic_table_coordinate, on_step=on_step)
-
-
-# GENERATES CHILD NODES FOR A GIVEN NODE USING THE HEURISTIC TABLE
-def expand(problem: Problem, node: Node, heuristic_table_coordinate: dict):
-    for action in problem.actions(node.state):
-        s2 = problem.result(node.state, action)
-        cost = heuristic_table_coordinate[s2]
-        child = Node(state=s2, parent=node, action=action, h=cost, f=cost)
-        yield child
-
 
 # RECONSTRUCTS THE PATH FROM GOAL NODE TO START NODE
 def reconstruct_path(node: Node):

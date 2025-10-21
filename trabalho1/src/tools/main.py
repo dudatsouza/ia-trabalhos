@@ -52,9 +52,8 @@ def show_heuristic_menu(algorithm: str):
     print(f"Heuristic Options for {algorithm}:")
     print("1. Manhattan Distance")
     print("2. Euclidean Distance")
-    print("3. Octile Distance")
-    print("4. Chebyshev Distance")
-    print("5. Back to Previous Menu")
+    print("3. Inadmissible Heuristic")
+    print("4. Back to Previous Menu")
 
 # GET OPTION FUNCTION
 def get_option(max_option: int = 5) -> int:
@@ -139,12 +138,13 @@ def show_comparison_informed(metrics):
     col_data_width = 12 
     headers = (
         "Métrica",
-        "A*-Manhattan", "A*-Euclidean", "A*-Octile", "A*-Chebyshev",
-        "G-Manhattan", "G-Euclidean", "G-Octile", "G-Chebyshev"
+        "A*-Manhattan", "A*-Euclidean", "A*-Inadmissible",
+        "G-Manhattan", "G-Euclidean", "G-Inadmissible"
     )
     header_line = (
         f"{headers[0]:<{col_metrica_width}} | "
-        f"{headers[1]:>{col_data_width}} | {headers[2]:>{col_data_width}} | {headers[3]:>{col_data_width}} | {headers[4]:>{col_data_width}} | "
+        f"{headers[1]:>{col_data_width}} | {headers[2]:>{col_data_width}} | {headers[3]:>{col_data_width}} | "
+        f"{headers[4]:>{col_data_width}} | "
         f"{headers[5]:>{col_data_width}} | {headers[6]:>{col_data_width}} | {headers[7]:>{col_data_width}} | {headers[8]:>{col_data_width}}"
     )
     print(header_line)
@@ -155,26 +155,26 @@ def show_comparison_informed(metrics):
     )
     print(separator)
     print(f"{'Tempo médio (ms)':<{col_metrica_width}} | "
-            f"{metrics['A*-Manhattan avg time (ms)']:>{col_data_width}} | {metrics['A*-Euclidean avg time (ms)']:>{col_data_width}} | {metrics['A*-Octile avg time (ms)']:>{col_data_width}} | {metrics['A*-Chebyshev avg time (ms)']:>{col_data_width}} | "
-            f"{metrics['Greedy-Manhattan avg time (ms)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg time (ms)']:>{col_data_width}} | {metrics['Greedy-Octile avg time (ms)']:>{col_data_width}} | {metrics['Greedy-Chebyshev avg time (ms)']:>{col_data_width}}")
+            f"{metrics['A*-Manhattan avg time (ms)']:>{col_data_width}} | {metrics['A*-Euclidean avg time (ms)']:>{col_data_width}} | {metrics['A*-Inadmissible avg time (ms)']:>{col_data_width}} | "
+            f"{metrics['Greedy-Manhattan avg time (ms)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg time (ms)']:>{col_data_width}} | {metrics['Greedy-Inadmissible avg time (ms)']:>{col_data_width}}")
     print(f"{'Nós médios':<{col_metrica_width}} | "
-            f"{metrics['A*-Manhattan avg nodes']:>{col_data_width}} | {metrics['A*-Euclidean avg nodes']:>{col_data_width}} | {metrics['A*-Octile avg nodes']:>{col_data_width}} | {metrics['A*-Chebyshev avg nodes']:>{col_data_width}} | "
-            f"{metrics['Greedy-Manhattan avg nodes']:>{col_data_width}} | {metrics['Greedy-Euclidean avg nodes']:>{col_data_width}} | {metrics['Greedy-Octile avg nodes']:>{col_data_width}} | {metrics['Greedy-Chebyshev avg nodes']:>{col_data_width}}")
+            f"{metrics['A*-Manhattan avg nodes']:>{col_data_width}} | {metrics['A*-Euclidean avg nodes']:>{col_data_width}} | {metrics['A*-Inadmissible avg nodes']:>{col_data_width}} | "
+            f"{metrics['Greedy-Manhattan avg nodes']:>{col_data_width}} | {metrics['Greedy-Euclidean avg nodes']:>{col_data_width}} | {metrics['Greedy-Inadmissible avg nodes']:>{col_data_width}}")
     print(f"{'Custo médio':<{col_metrica_width}} | "
-            f"{metrics['A*-Manhattan avg cost']:>{col_data_width}} | {metrics['A*-Euclidean avg cost']:>{col_data_width}} | {metrics['A*-Octile avg cost']:>{col_data_width}} | {metrics['A*-Chebyshev avg cost']:>{col_data_width}} | "
-            f"{metrics['Greedy-Manhattan avg cost']:>{col_data_width}} | {metrics['Greedy-Euclidean avg cost']:>{col_data_width}} | {metrics['Greedy-Octile avg cost']:>{col_data_width}} | {metrics['Greedy-Chebyshev avg cost']:>{col_data_width}}")
+            f"{metrics['A*-Manhattan avg cost']:>{col_data_width}} | {metrics['A*-Euclidean avg cost']:>{col_data_width}} | {metrics['A*-Inadmissible avg cost']:>{col_data_width}} | "
+            f"{metrics['Greedy-Manhattan avg cost']:>{col_data_width}} | {metrics['Greedy-Euclidean avg cost']:>{col_data_width}} | {metrics['Greedy-Inadmissible avg cost']:>{col_data_width}}")
     print(f"{'Memória Peak (KB)':<{col_metrica_width}} | "
-            f"{metrics['A*-Manhattan avg peak (KB)']:>{col_data_width}} | {metrics['A*-Euclidean avg peak (KB)']:>{col_data_width}} | {metrics['A*-Octile avg peak (KB)']:>{col_data_width}} | {metrics['A*-Chebyshev avg peak (KB)']:>{col_data_width}} | "
-            f"{metrics['Greedy-Manhattan avg peak (KB)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg peak (KB)']:>{col_data_width}} | {metrics['Greedy-Octile avg peak (KB)']:>{col_data_width}} | {metrics['Greedy-Chebyshev avg peak (KB)']:>{col_data_width}}")
+            f"{metrics['A*-Manhattan avg peak (KB)']:>{col_data_width}} | {metrics['A*-Euclidean avg peak (KB)']:>{col_data_width}} | {metrics['A*-Inadmissible avg peak (KB)']:>{col_data_width}} | "
+            f"{metrics['Greedy-Manhattan avg peak (KB)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg peak (KB)']:>{col_data_width}} | {metrics['Greedy-Inadmissible avg peak (KB)']:>{col_data_width}}")
     print(f"{'Memória Current (KB)':<{col_metrica_width}} | "
-            f"{metrics['A*-Manhattan avg current (KB)']:>{col_data_width}} | {metrics['A*-Euclidean avg current (KB)']:>{col_data_width}} | {metrics['A*-Octile avg current (KB)']:>{col_data_width}} | {metrics['A*-Chebyshev avg current (KB)']:>{col_data_width}} | "
-            f"{metrics['Greedy-Manhattan avg current (KB)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg current (KB)']:>{col_data_width}} | {metrics['Greedy-Octile avg current (KB)']:>{col_data_width}} | {metrics['Greedy-Chebyshev avg current (KB)']:>{col_data_width}}")
+            f"{metrics['A*-Manhattan avg current (KB)']:>{col_data_width}} | {metrics['A*-Euclidean avg current (KB)']:>{col_data_width}} | {metrics['A*-Inadmissible avg current (KB)']:>{col_data_width}} | "
+            f"{metrics['Greedy-Manhattan avg current (KB)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg current (KB)']:>{col_data_width}} | {metrics['Greedy-Inadmissible avg current (KB)']:>{col_data_width}}")
     print(f"{'Memória RSS (B)':<{col_metrica_width}} | "
-            f"{metrics['A*-Manhattan avg memory (B)']:>{col_data_width}} | {metrics['A*-Euclidean avg memory (B)']:>{col_data_width}} | {metrics['A*-Octile avg memory (B)']:>{col_data_width}} | {metrics['A*-Chebyshev avg memory (B)']:>{col_data_width}} | "
-            f"{metrics['Greedy-Manhattan avg memory (B)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg memory (B)']:>{col_data_width}} | {metrics['Greedy-Octile avg memory (B)']:>{col_data_width}} | {metrics['Greedy-Chebyshev avg memory (B)']:>{col_data_width}}")
+            f"{metrics['A*-Manhattan avg memory (B)']:>{col_data_width}} | {metrics['A*-Euclidean avg memory (B)']:>{col_data_width}} | {metrics['A*-Inadmissible avg memory (B)']:>{col_data_width}} | "
+            f"{metrics['Greedy-Manhattan avg memory (B)']:>{col_data_width}} | {metrics['Greedy-Euclidean avg memory (B)']:>{col_data_width}} | {metrics['Greedy-Inadmissible avg memory (B)']:>{col_data_width}}")
     print(f"{'Encontrado':<{col_metrica_width}} | "
-            f"{metrics['A*-Manhattan found count']:>{col_data_width}} | {metrics['A*-Euclidean found count']:>{col_data_width}} | {metrics['A*-Octile found count']:>{col_data_width}} | {metrics['A*-Chebyshev found count']:>{col_data_width}} | "
-            f"{metrics['Greedy-Manhattan found count']:>{col_data_width}} | {metrics['Greedy-Euclidean found count']:>{col_data_width}} | {metrics['Greedy-Octile found count']:>{col_data_width}} | {metrics['Greedy-Chebyshev found count']:>{col_data_width}}")
+            f"{metrics['A*-Manhattan found count']:>{col_data_width}} | {metrics['A*-Euclidean found count']:>{col_data_width}} | {metrics['A*-Inadmissible found count']:>{col_data_width}} | "
+            f"{metrics['Greedy-Manhattan found count']:>{col_data_width}} | {metrics['Greedy-Euclidean found count']:>{col_data_width}} | {metrics['Greedy-Inadmissible found count']:>{col_data_width}}")
     print(separator)
     print()
 
@@ -191,12 +191,10 @@ def show_visualize_informed(problem, matrix):
     combos = [
         ('a_star', 'manhattan'),
         ('a_star', 'euclidean'),
-        ('a_star', 'octile'),
-        ('a_star', 'chebyshev'),
+        ('a_star', 'inadmissible'),
         ('greedy', 'manhattan'),
         ('greedy', 'euclidean'),
-        ('greedy', 'octile'),
-        ('greedy', 'chebyshev'),
+        ('greedy', 'inadmissible'),
     ]
     print(f"Generating {len(combos)} GIFs in {output_dir}...")
     for alg, heur in combos:
@@ -274,14 +272,10 @@ def main():
                             compute_a_star_search(problem, heuristic="euclidean")
                             break
                         elif heuristic_option == 3:
-                            print("A* Search with Octile Distance selected.")
-                            compute_a_star_search(problem, heuristic="octile")
+                            print("A* Search with Inadmissible Heuristic selected.")
+                            compute_a_star_search(problem, heuristic="inadmissible")
                             break
                         elif heuristic_option == 4:
-                            print("A* Search with Chebyshev Distance selected.")
-                            compute_a_star_search(problem, heuristic="chebyshev")
-                            break
-                        elif heuristic_option == 5:
                             break
                         else:
                             print("Invalid option. Please try again.")
@@ -300,14 +294,10 @@ def main():
                             compute_greedy_best_first_search(problem, heuristic="euclidean")
                             break
                         elif heuristic_option == 3:
-                            print("Greedy Best-First Search with Octile Distance selected.")
-                            compute_greedy_best_first_search(problem, heuristic="octile")
+                            print("Greedy Best-First Search with Inadmissible Heuristic selected.")
+                            compute_greedy_best_first_search(problem, heuristic="inadmissible")
                             break
                         elif heuristic_option == 4:
-                            print("Greedy Best-First Search with Chebyshev Distance selected.")
-                            compute_greedy_best_first_search(problem, heuristic="chebyshev")
-                            break
-                        elif heuristic_option == 5:
                             break
                         else:
                             print("Invalid option. Please try again.")

@@ -9,7 +9,7 @@ import json
 # CORE
 from core.maze_representation import Maze
 from core.maze_problem import MazeProblem
-from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_inadmissible
 from core.node import Node
 
 # INFORMED SEARCH
@@ -29,8 +29,8 @@ def compare_informed_search_algorithms(matrix: List[List[str]], num_runs: int = 
     
     # DEFINE KEYS FOR ALL ALGORITHM-HEURISTIC COMBINATIONS
     keys_to_test = [
-        'A*-Manhattan', 'A*-Euclidean', 'A*-Octile', 'A*-Chebyshev',
-        'Greedy-Manhattan', 'Greedy-Euclidean', 'Greedy-Octile', 'Greedy-Chebyshev'
+        'A*-Manhattan', 'A*-Euclidean', 'A*-Inadmissible',
+        'Greedy-Manhattan', 'Greedy-Euclidean', 'Greedy-Inadmissible'
     ]
     
     # INITIALIZE METRIC STORAGE
@@ -51,12 +51,8 @@ def compare_informed_search_algorithms(matrix: List[List[str]], num_runs: int = 
         (r, c): problem.heuristic((r, c), problem.goal, function_h=h_euclidean_distance)
         for r in range(problem.maze.H) for c in range(problem.maze.W)
     }
-    heuristic_table_oct = {
-        (r, c): problem.heuristic((r, c), problem.goal, function_h=h_octile_distance)
-        for r in range(problem.maze.H) for c in range(problem.maze.W)
-    }
-    heuristic_table_cheby = {
-        (r, c): problem.heuristic((r, c), problem.goal, function_h=h_chebyshev_distance)
+    heuristic_table_inad = {
+        (r, c): problem.heuristic((r, c), problem.goal, function_h=h_inadmissible)
         for r in range(problem.maze.H) for c in range(problem.maze.W)
     }
         
@@ -68,8 +64,8 @@ def compare_informed_search_algorithms(matrix: List[List[str]], num_runs: int = 
     for _ in range(num_runs):
         # --- A* SEARCHES ---
         for name, table in zip(
-            ['A*-Manhattan','A*-Euclidean','A*-Octile','A*-Chebyshev'],
-            [heuristic_table_manh, heuristic_table_euc, heuristic_table_oct, heuristic_table_cheby]
+            ['A*-Manhattan','A*-Euclidean','A*-Inadmissible'],
+            [heuristic_table_manh, heuristic_table_euc, heuristic_table_inad]
         ):
             res, t, m, c, p = measure_time_memory(a_star_table_search, problem, f_astar, table)
             if res:
@@ -84,8 +80,8 @@ def compare_informed_search_algorithms(matrix: List[List[str]], num_runs: int = 
 
         # --- GREEDY SEARCHES ---
         for name, table in zip(
-            ['Greedy-Manhattan','Greedy-Euclidean','Greedy-Octile','Greedy-Chebyshev'],
-            [heuristic_table_manh, heuristic_table_euc, heuristic_table_oct, heuristic_table_cheby]
+            ['Greedy-Manhattan','Greedy-Euclidean','Greedy-Inadmissible'],
+            [heuristic_table_manh, heuristic_table_euc, heuristic_table_inad]
         ):
             res, t, m, c, p = measure_time_memory(greedy_best_first_search, problem, f_greedy, table)
             if res:

@@ -17,7 +17,7 @@ def plot_informed_metrics(metrics: dict, heuristics: list | None = None, out_dir
     out_dir = repo_root / 'data' / 'output' / 'graphics' / 'informed'
 
     # DEFAULT HEURISTICS IF NOT PROVIDED
-    heuristics = heuristics or ['Manhattan', 'Euclidean', 'Octile', 'Chebyshev']
+    heuristics = heuristics or ['Manhattan', 'Euclidean', 'Inadmissible']
 
     # EXTRACT PER-HEURISTIC METRICS
     times_astar = []
@@ -172,13 +172,11 @@ def plot_informed_time_memory(metrics: dict, out_dir: str | Path | None = None):
     algorithms = [
         ('A*-Manhattan',   metrics.get('A*-Manhattan avg time (ms)', 0),   metrics.get('A*-Manhattan avg memory (B)', 0)),
         ('A*-Euclidean',   metrics.get('A*-Euclidean avg time (ms)', 0),   metrics.get('A*-Euclidean avg memory (B)', 0)),
-        ('A*-Octile',      metrics.get('A*-Octile avg time (ms)', 0),      metrics.get('A*-Octile avg memory (B)', 0)),
-        ('A*-Chebyshev',   metrics.get('A*-Chebyshev avg time (ms)', 0),   metrics.get('A*-Chebyshev avg memory (B)', 0)),
+        ('A*-Inadmissible', metrics.get('A*-Inadmissible avg time (ms)', 0), metrics.get('A*-Inadmissible avg memory (B)', 0)),
 
         ('Greedy-Manhattan', metrics.get('Greedy-Manhattan avg time (ms)', 0), metrics.get('Greedy-Manhattan avg memory (B)', 0)),
         ('Greedy-Euclidean', metrics.get('Greedy-Euclidean avg time (ms)', 0), metrics.get('Greedy-Euclidean avg memory (B)', 0)),
-        ('Greedy-Octile',    metrics.get('Greedy-Octile avg time (ms)', 0),    metrics.get('Greedy-Octile avg memory (B)', 0)),
-        ('Greedy-Chebyshev', metrics.get('Greedy-Chebyshev avg time (ms)', 0), metrics.get('Greedy-Chebyshev avg memory (B)', 0))
+        ('Greedy-Inadmissible', metrics.get('Greedy-Inadmissible avg time (ms)', 0), metrics.get('Greedy-Inadmissible avg memory (B)', 0))
     ]
 
     # PREPARE PLOT

@@ -7,7 +7,7 @@ import tempfile
 # CORE
 from core.maze_representation import Maze
 from core.maze_problem import MazeProblem
-from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_octile_distance, h_chebyshev_distance
+from core.heuristics import h_manhattan_distance, h_euclidean_distance, h_inadmissible
 from core.problem import Problem
 
 # INFORMED SEARCH
@@ -44,8 +44,7 @@ def generate_gifs_informed(problem: Problem, matrix, heuristic: str = "manhattan
             problem.goal,
             function_h=h_manhattan_distance if heuristic == "manhattan" else
                        h_euclidean_distance if heuristic == "euclidean" else
-                       h_octile_distance if heuristic == "octile" else
-                       h_chebyshev_distance
+                       h_inadmissible
         )
         for r in range(problem.maze.H) for c in range(problem.maze.W)
     }
