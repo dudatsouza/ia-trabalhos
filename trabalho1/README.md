@@ -115,6 +115,11 @@ Para instalar o projeto, siga os passos abaixo:
     poetry install
   ```
 
+  3.1. Alternativamente, instale as dependências com pip: 
+  ```console
+    pip install -r requirements.txt
+  ```
+
   4. Caso você não tenha o `tkinter` instalado (necessário para a interface gráfica), instale manualmente:
   ```console
     sudo apt-get install python3-tk # Linux (Debian/Ubuntu) 
