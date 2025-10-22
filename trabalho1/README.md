@@ -136,7 +136,7 @@ Para instalar o projeto, siga os passos abaixo:
         
         ```console
           Usando Poetry
-          poetry run python -m tools.run_gui
+          poetry run python src/tools/run_gui.py
         ```
 
       - **Windows** 
@@ -147,7 +147,7 @@ Para instalar o projeto, siga os passos abaixo:
           
         ```console
           Usando Poetry
-          poetry run python -m tools.run_gui
+          poetry run python src/tools/run_gui.py
         ```
 
       ### Sem GUI (`main.py`)
@@ -160,7 +160,7 @@ Para instalar o projeto, siga os passos abaixo:
           
         ```console
           # Usando Poetry
-          # poetry run python -m tools.main
+          # poetry run python src/tools/main.py
         ```
 
       - **Windows**
@@ -171,7 +171,7 @@ Para instalar o projeto, siga os passos abaixo:
         
         ```console
           # Usando Poetry
-          # poetry run python -m tools.main
+          # poetry run python src/tools/main.py
         ```
 </div> 
 
