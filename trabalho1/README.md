@@ -103,14 +103,14 @@ Para instalar o projeto, siga os passos abaixo:
   git clone https://github.com/dudatsouza/ia-trabalhos.git
   cd ia-trabalhos/trabalho1
   ```
-  2. Crie e ative um ambiente virtual (recomendado):
+  2. Crie e ative um ambiente virtual (recomendado) - garanta que já possui o [Python](https://www.python.org/downloads/), no mínimo na versão 3.11.9:
   ```console
   python3 -m venv venv
   source venv/bin/activate   # Linux/macOS
   venv\Scripts\activate      # Windows
   ```
 
-  3. Instale as dependências do Poetry: 
+  3. Instale as dependências do Poetry - garanta que possui o [Poetry](https://python-poetry.org/docs/) instalado: 
   ```console
     poetry install
   ```
