@@ -11,7 +11,6 @@ from core.node import Node
 # SEARCH
 from search.measure_time_memory import measure_time_memory
 
-
 # COMPUTES GREEDY BEST-FIRST SEARCH USING SPECIFIED HEURISTIC
 def compute_greedy_best_first_search(problem: Problem, heuristic: str):
     # BUILD HEURISTIC TABLE FOR ALL COORDINATES

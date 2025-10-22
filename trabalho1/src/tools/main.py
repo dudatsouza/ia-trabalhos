@@ -222,9 +222,22 @@ def show_visualize_informed(problem, matrix):
 # MAIN FUNCTION HANDLING MENU INTERACTIONS AND SEARCH EXECUTIONS
 def main():  
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    maze_path = os.path.join(script_dir, "..", "..", "data", "input", "maze.txt")
 
-    matrix = read_matrix_from_file(os.path.join(script_dir, '..', "..", 'data', 'input', 'maze.txt'))
+    print("Digite o nome do arquivo .txt, que será carregado da pasta ./data/input/:")
+    name_file = input().strip()  
+    file = name_file + ".txt"
+
+    # monta o caminho completo do arquivo
+    file_path = os.path.join(script_dir, '..', '..', 'data', 'input', file)
+
+    if not os.path.exists(file_path):
+        print(f"Erro: o arquivo '{file}' não foi encontrado em './data/input/'.")
+        sys.exit(1)
+    else:
+        # lê a matriz do arquivo
+        matrix = read_matrix_from_file(file_path)
+        print("Arquivo carregado com sucesso!")
+    
 
     mz = Maze(matrix)
     problem = MazeProblem(mz)
