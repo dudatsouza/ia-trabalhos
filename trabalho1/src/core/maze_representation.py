@@ -87,8 +87,3 @@ class Maze:
                 if self.passable((r, c)):
                     graph[(r, c)] = self.neighbors_coords((r, c))
         return graph
-
-    # PRINTS THE MAZE IN A READABLE FORMAT
-    def pretty_print(self):
-        for row in self.grid:
-            print(''.join(row))

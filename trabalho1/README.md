@@ -31,7 +31,7 @@ Neste repositório você encontrará o código fonte do projeto, bem como os dad
 De uma forma compacta e organizada, os arquivos e diretórios estão dispostos da seguinte forma:
 
   ```.
-ai-trabalhos/
+ia-trabalhos/
 └── trabalho1/
     ├── data/
     │   ├── input/
