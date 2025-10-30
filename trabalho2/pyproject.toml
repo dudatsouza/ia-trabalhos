@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "8-queen-hill-climbing"
+version = "0.1.0"
+description = ""
+authors = ["alvarengazv <gui.alvarengas234@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+matplotlib = "^3.10.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
