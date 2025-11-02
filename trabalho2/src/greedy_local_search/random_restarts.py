@@ -6,6 +6,7 @@ from greedy_local_search.sideways_moves import hill_climbing_with_sideways_moves
 from greedy_local_search.hill_climbing import hill_climbing
 
 import matplotlib.pyplot as plt
+from typing import List, Optional
 
 def plot_search_history(history):
     """Plots the number of conflicts over iterations."""
@@ -24,17 +25,24 @@ def plot_search_history(history):
     plt.legend()
     plt.show()
 
-def compute_hill_climbing_with_random_restarts(problem: EightQueensProblem, allow_sideways: bool = False, max_moves_per_restart: int = 100, max_restarts: int = 100):
+def compute_hill_climbing_with_random_restarts(
+    problem: EightQueensProblem,
+    allow_sideways: bool = False,
+    max_moves_per_restart: int = 100,
+    max_restarts: int = 100,
+    track_states: bool = True,
+):
     # CALL THE HILL CLIMBING WITH RANDOM RESTARTS AND MEASURE TIME/MEMORY
     result, elapsed_time, memory_used, current, peak = measure_time_memory(
         hill_climbing_with_random_restarts,
         problem,
         allow_sideways,
         max_moves_per_restart,
-        max_restarts
+        max_restarts,
+        track_states,
     )
 
-    best_solution, best_fitness, restart_count, history = result
+    best_solution, best_fitness, restart_count, history, states = result
 
     plot_search_history(history)
 
@@ -54,7 +62,17 @@ def compute_hill_climbing_with_random_restarts(problem: EightQueensProblem, allo
         print("Best solution:", best_solution)
         print("Best fitness (number of conflicts):", -best_fitness)
         print("Number of restarts:", restart_count)
-        return
+        return {
+            "solution": best_solution,
+            "history": history,
+            "states": states,
+            "best_fitness": best_fitness,
+            "restart_count": restart_count,
+            "elapsed_ms": elapsed_time,
+            "rss_delta": memory_used,
+            "current_bytes": current,
+            "peak_bytes": peak,
+        }
 
     if best_solution:
         print("Board of Solution:", best_solution)
@@ -64,26 +82,61 @@ def compute_hill_climbing_with_random_restarts(problem: EightQueensProblem, allo
         print(f"Memory used: {memory_used:.12f} B")
         print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
+    return {
+        "solution": best_solution,
+        "history": history,
+        "states": states,
+        "best_fitness": best_fitness,
+        "restart_count": restart_count,
+        "elapsed_ms": elapsed_time,
+        "rss_delta": memory_used,
+        "current_bytes": current,
+        "peak_bytes": peak,
+    }
 
-def hill_climbing_with_random_restarts(problem, allow_sideways=False, max_moves_per_restart=100, max_restarts=100):
+
+def hill_climbing_with_random_restarts(
+    problem,
+    allow_sideways: bool = False,
+    max_moves_per_restart: int = 100,
+    max_restarts: int = 100,
+    track_states: bool = False,
+):
     best_solution = None
     best_fitness = float('-inf')
     restart_count = 0
+    best_history: List[int] = []
+    best_states: Optional[List[List[int]]] = None
 
     for restart in range(max_restarts):
         restart_count += 1
 
         if allow_sideways:
-            current, history = hill_climbing_with_sideways_moves(problem, max_moves_per_restart)
+            current, history, states = hill_climbing_with_sideways_moves(
+                problem,
+                max_moves_per_restart,
+                track_states=track_states,
+            )
         else:
-            current, history = hill_climbing(problem)
+            current, history, states = hill_climbing(
+                problem,
+                track_states=track_states,
+            )
 
         current_fitness = problem.fitness(current)
         if current_fitness > best_fitness:
             best_fitness = current_fitness
             best_solution = current
+            best_history = history
+            best_states = states
 
         if best_fitness == 0:  # Found a solution with zero conflicts
             break
 
-    return best_solution, best_fitness, restart_count, history
+    return (
+        best_solution,
+        best_fitness,
+        restart_count,
+        best_history,
+        best_states if track_states else None,
+    )

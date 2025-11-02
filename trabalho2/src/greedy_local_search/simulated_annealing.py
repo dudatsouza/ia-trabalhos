@@ -1,4 +1,7 @@
-import math, random, itertools
+import itertools
+import math
+import random
+from typing import List, Optional
 
 from core.eight_queens_representation import EightQueensProblem
 
@@ -23,7 +26,12 @@ def plot_search_history(history):
     plt.legend()
     plt.show()
 
-def compute_simulated_annealing(problem: EightQueensProblem, temperature: int = 100, cooling_func: int = 2):
+def compute_simulated_annealing(
+    problem: EightQueensProblem,
+    temperature: int = 100,
+    cooling_func: int = 1,
+    track_states: bool = True,
+):
     print("Cooling function:", "Linear" if cooling_func == 1 else "Logarithmic")
     a = input("Press Enter to start the Simulated Annealing computation...")
     # CALL THE SIMULATED ANNEALING AND MEASURE TIME/MEMORY
@@ -31,10 +39,11 @@ def compute_simulated_annealing(problem: EightQueensProblem, temperature: int = 
         simulated_annealing,
         problem,
         temperature,
-        cooling_func
+        cooling_func,
+        track_states
     )
 
-    best_solution, best_fitness, history = result
+    best_solution, best_fitness, history, states = result
 
     plot_search_history(history)
 
@@ -53,7 +62,16 @@ def compute_simulated_annealing(problem: EightQueensProblem, temperature: int = 
         print("No solution found")
         print("Best solution:", best_solution)
         print("Best fitness (number of conflicts):", -best_fitness)
-        return
+        return {
+            "solution": best_solution,
+            "history": history,
+            "states": states,
+            "fitness": best_fitness,
+            "elapsed_ms": elapsed_time,
+            "rss_delta": memory_used,
+            "current_bytes": current,
+            "peak_bytes": peak,
+        }
 
     if best_solution:
         print("Board of Solution:", best_solution)
@@ -62,34 +80,59 @@ def compute_simulated_annealing(problem: EightQueensProblem, temperature: int = 
         print(f"Memory used: {memory_used:.12f} B")
         print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
+    return {
+        "solution": best_solution,
+        "history": history,
+        "states": states,
+        "fitness": best_fitness,
+        "elapsed_ms": elapsed_time,
+        "rss_delta": memory_used,
+        "current_bytes": current,
+        "peak_bytes": peak,
+    }
 
-def simulated_annealing(problem, temperature=100, cooling_func=2):
-    random.seed(123)
+
+def simulated_annealing(
+    problem,
+    temperature,
+    cooling_func,
+    track_states
+):
+    rng = random.Random()
     current = problem.initial_board()
-    history = []
+    history: List[int] = [problem.conflicts(current)]
+    states: Optional[List[List[int]]] = [current.copy()] if track_states else None
+
     for t in itertools.count(start=1):
-        history.append(-problem.fitness(current))
         T = schedule(t, cooling_func=cooling_func, initial_temp=temperature)
-        # print( f"Temperature at step {t}: {T}" )
-        if T == 0:
-            return current, problem.fitness(current), history
-        
-        lista = [problem.apply(current, mv) for mv in problem.neighbors(current)]
+        if T <= 0:
+            break
 
-        next = random.choice(lista)
+        neighbors = [problem.apply(current, mv) for mv in problem.neighbors(current)]
+        candidate = rng.choice(neighbors)
 
-        delta_E = problem.conflicts(current) - problem.conflicts(next)
+        current_conflicts = problem.conflicts(current)
+        candidate_conflicts = problem.conflicts(candidate)
+        delta_conflicts = current_conflicts - candidate_conflicts
 
-        if delta_E > 0:
-            current = next
+        if delta_conflicts > 0:
+            current = candidate
         else:
-            probability = math.exp(-delta_E / T)
-            if random.random() < probability:
-                current = next
-    return current, problem.fitness(current), history
+            acceptance = math.exp(delta_conflicts / T)
+            print("Acceptance probability:", acceptance)
+            r = rng.random()
+            print("Random value:", r)
+            if r < acceptance:
+                current = candidate
+
+        history.append(problem.conflicts(current))
+        if track_states and states is not None:
+            states.append(current.copy())
+
+    return current, problem.fitness(current), history, states if track_states else None
 
 
-def schedule(t, cooling_func=2, initial_temp=100):
+def schedule(t, cooling_func, initial_temp=100):
     # print( f"Scheduling at time {t} with cooling function {cooling_func} and initial temp {initial_temp}" )
     if cooling_func == 1:
         val = initial_temp - 0.1 * t # Linear cooling

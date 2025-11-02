@@ -3,9 +3,10 @@ from core.eight_queens_representation import EightQueensProblem
 from tools.measure_time_memory import measure_time_memory
 
 import matplotlib.pyplot as plt
-import random
+from typing import Dict, List, Optional, Tuple
 
-def plot_search_history(history):
+
+def plot_search_history(history: List[int]) -> None:
     """Plots the number of conflicts over iterations."""
     if not history:
         print("No history to plot.")
@@ -17,73 +18,103 @@ def plot_search_history(history):
     plt.xlabel("Iteration")
     plt.ylabel("Number of Conflicts")
     plt.grid(True)
-    # Add a horizontal line at 0 to represent the goal
     plt.axhline(y=0, color='r', linestyle='--', label='Goal (0 Conflicts)')
     plt.legend()
     plt.show()
 
-def compute_hill_climbing_with_sideways_moves(problem: EightQueensProblem, max_sideways_moves: int = 100):
-    # CALL THE HILL CLIMBING WITH SIDEWAYS MOVES AND MEASURE TIME/MEMORY
-    result, elapsed_time, memory_used, current, peak = measure_time_memory(
+
+def compute_hill_climbing_with_sideways_moves(
+    problem: EightQueensProblem,
+    max_sideways_moves: int = 100,
+    track_states: bool = True,
+):
+    """Executes the sideways hill climbing variant and prints metrics."""
+
+    result, elapsed_time, memory_used, current_mem, peak_mem = measure_time_memory(
         hill_climbing_with_sideways_moves,
         problem,
-        max_sideways_moves
+        max_sideways_moves,
+        track_states,
     )
 
-    best_solution, history = result
+    best_solution, history, states = result
 
     plot_search_history(history)
 
     if best_solution:
         for i in range(8):
             for j in range(8):
-                if best_solution and best_solution[j] == i:
-                    print("Q", end=' ')
+                if best_solution[j] == i:
+                    print("Q", end=" ")
                 else:
                     for mv in problem.neighbors(best_solution):
                         if mv[0] == j and mv[1] == i:
-                            print(f"{problem.conflicts(problem.apply(best_solution, mv))}", end=' ')
+                            print(f"{problem.conflicts(problem.apply(best_solution, mv))}", end=" ")
             print()
 
     if best_solution is None or problem.fitness(best_solution) != 0:
         print("No solution found")
         print("Board of Best solution:", best_solution)
-        print("Best fitness (number of conflicts):", -problem.fitness(best_solution) if best_solution else 0)
-        return 
-        
-    if best_solution:
+        print(
+            "Best fitness (number of conflicts):",
+            -problem.fitness(best_solution) if best_solution else 0,
+        )
+    else:
         print("Board of Solution:", best_solution)
-        print("Fitness (number of conflicts):", -problem.fitness(best_solution) if best_solution else 0)
+        print(
+            "Fitness (number of conflicts):",
+            -problem.fitness(best_solution) if best_solution else 0,
+        )
         print(f"Time taken: {elapsed_time:.3f} milliseconds")
         print(f"Memory used: {memory_used:.12f} B")
-        print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
+        print(
+            f"Current memory usage: {current_mem / 1024:.3f} KB; Peak: {peak_mem / 1024:.3f} KB"
+        )
 
-def hill_climbing_with_sideways_moves(problem, max_sideways_moves):
-    random.seed(123)
+    return {
+        "solution": best_solution,
+        "history": history,
+        "states": states,
+        "elapsed_ms": elapsed_time,
+        "rss_delta": memory_used,
+        "current_bytes": current_mem,
+        "peak_bytes": peak_mem,
+    }
+
+
+def hill_climbing_with_sideways_moves(
+    problem,
+    max_sideways_moves: int,
+    track_states: bool = False,
+):
     current = problem.initial_board()
     sideways_moves = 0
-    history = []
-    # Keep at most 8 visited boards
-    visited_boards = {}
+    history: List[int] = [problem.conflicts(current)]
+    states: Optional[List[List[int]]] = [current.copy()] if track_states else None
+    visited_boards: Dict[Tuple[int, ...], int] = {}
 
     while True:
-        history.append(-problem.fitness(current))
-
         neighbor = current
-        best_value = float('-inf')
-        
-        for mv in problem.neighbors(current):
-            n = problem.apply(current, mv)
+        best_value = float("-inf")
 
-            if visited_boards is not None and tuple(n) in visited_boards:
+        for mv in problem.neighbors(current):
+            candidate = problem.apply(current, mv)
+
+            if tuple(candidate) in visited_boards:
                 continue
 
-            if problem.fitness(n) > best_value:
-                best_value = problem.fitness(n)
-                neighbor = n
+            fitness = problem.fitness(candidate)
+            if fitness > best_value:
+                best_value = fitness
+                neighbor = candidate
 
-        if problem.fitness(neighbor) > problem.fitness(current):
-            # If the size exceeds 8, remove the oldest entry
+        if neighbor is current:
+            break
+
+        current_fitness = problem.fitness(current)
+        neighbor_fitness = problem.fitness(neighbor)
+
+        if neighbor_fitness > current_fitness:
             if len(visited_boards) >= 8:
                 oldest_board = next(iter(visited_boards))
                 del visited_boards[oldest_board]
@@ -91,17 +122,25 @@ def hill_climbing_with_sideways_moves(problem, max_sideways_moves):
             visited_boards[tuple(current)] = problem.conflicts(current)
             current = neighbor
             sideways_moves = 0
-        elif problem.fitness(neighbor) == problem.fitness(current):
+            history.append(problem.conflicts(current))
+            if track_states and states is not None:
+                states.append(current.copy())
+
+        elif neighbor_fitness == current_fitness:
             if sideways_moves < max_sideways_moves:
                 if len(visited_boards) >= 8:
                     oldest_board = next(iter(visited_boards))
                     del visited_boards[oldest_board]
+
                 visited_boards[tuple(current)] = problem.conflicts(current)
                 current = neighbor
                 sideways_moves += 1
+                history.append(problem.conflicts(current))
+                if track_states and states is not None:
+                    states.append(current.copy())
             else:
                 break
         else:
             break
 
-    return current, history
+    return current, history, states if track_states else None
