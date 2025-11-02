@@ -41,7 +41,8 @@ def show_algorithm_menu(algorithm: str):
     elif algorithm == "simulated_annealing":
         print("3. Set Initial Temperature (default = 100)")
         print("4. Set Cooling Function (default = linear)")
-        print("5. Back to Main Menu")
+        print("5. Set Max Steps (default = 1000)")
+        print("6. Back to Main Menu")
 
 # GET OPTION FUNCTION
 def get_option(max_option: int = 5) -> int:
@@ -174,12 +175,13 @@ def main():
         elif option == 3:
             temperature = 100
             cooling_func = 2 # Default to logarithmic
+            max_steps = 1000
             while True:
                 show_algorithm_menu("simulated_annealing")
                 sub_option = get_option(5)
 
                 if sub_option == 1:
-                    compute_simulated_annealing(problem, temperature, cooling_func)
+                    compute_simulated_annealing(problem, temperature, cooling_func, True, max_steps)
                 elif sub_option == 2:
                     print("Visualizing Simulated Annealing...")
                     # show_visualize_simulated_annealing(problem, temperature, cooling_func)
@@ -196,8 +198,12 @@ def main():
                     elif choice == 2:
                         cooling_func = 2  # Logarithmic
 
-                    print(f"Cooling function set to {"linear" if cooling_func == 1 else "logarithmic"}.")
+                    print(f"Cooling function set to {'linear' if cooling_func == 1 else 'logarithmic'}.")
+                
                 elif sub_option == 5:
+                    max_steps = int(input("Enter the maximum number of steps: "))
+                    print(f"Max steps set to {max_steps}.")
+                elif sub_option == 6:
                     break
 
         elif option == 4:

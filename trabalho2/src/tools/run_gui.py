@@ -50,13 +50,13 @@ class App(tk.Tk):
 
         self.sideways_limit_var = tk.IntVar(value=100)
         self.rr_allow_sideways_var = tk.BooleanVar(value=True)
-        self.rr_max_moves_var = tk.IntVar(value=100)
+        self.rr_max_moves_var = tk.IntVar(value=20)
         self.rr_max_restarts_var = tk.IntVar(value=100)
         self.annealing_temp_var = tk.DoubleVar(value=100.0)
         self.annealing_cooling_var = tk.StringVar(value="linear")
         self.annealing_steps_var = tk.IntVar(value=1000)
         self.animation_delay_var = tk.IntVar(value=400)
-        self.comparison_runs_var = tk.IntVar(value=20)
+        self.comparison_runs_var = tk.IntVar(value=100)
 
         self.status_var = tk.StringVar(value="Ready")
 
@@ -443,6 +443,7 @@ class App(tk.Tk):
                 temperature=temp,
                 cooling_func=cooling_id,
                 track_states=True,
+                max_steps=max_steps,
             )
 
         result, elapsed_ms, rss_delta, current_bytes, peak_bytes = measure_time_memory(fn)
@@ -563,19 +564,15 @@ class App(tk.Tk):
         self._run_async("Comparison", lambda: self._comparison_worker(runs))
 
     def _comparison_worker(self, runs: int):
-        cooling_label = self.annealing_cooling_var.get()
-        cooling_id = 1 if cooling_label.lower().startswith("linear") else 2
-
         def fn():
             return compare_hill_climbing_algorithms(
                 num_runs=runs,
-                sideways_limit=self.sideways_limit_var.get(),
-                random_allow_sideways=self.rr_allow_sideways_var.get(),
-                random_max_moves=self.rr_max_moves_var.get(),
-                random_max_restarts=self.rr_max_restarts_var.get(),
+                sideways_limits=(10, 100),
+                random_max_moves=20,
+                random_max_restarts=100,
                 annealing_temperature=self.annealing_temp_var.get(),
-                annealing_cooling=cooling_id,
-                annealing_max_steps=self.annealing_steps_var.get(),
+                annealing_linear_max_steps=self.annealing_steps_var.get(),
+                annealing_log_max_steps=self.annealing_steps_var.get(),
             )
 
         metrics, elapsed_ms, rss_delta, current_bytes, peak_bytes = measure_time_memory(fn)

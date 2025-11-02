@@ -3,7 +3,7 @@ from core.eight_queens_representation import EightQueensProblem
 from tools.measure_time_memory import measure_time_memory
 
 import matplotlib.pyplot as plt
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 
 def plot_search_history(history: List[int]) -> None:
@@ -27,6 +27,7 @@ def compute_hill_climbing_with_sideways_moves(
     problem: EightQueensProblem,
     max_sideways_moves: int = 100,
     track_states: bool = True,
+    initial_board: Optional[Sequence[int]] = None,
 ):
     """Executes the sideways hill climbing variant and prints metrics."""
 
@@ -34,7 +35,8 @@ def compute_hill_climbing_with_sideways_moves(
         hill_climbing_with_sideways_moves,
         problem,
         max_sideways_moves,
-        track_states,
+        track_states=track_states,
+        initial_board=initial_board,
     )
 
     best_solution, history, states = result
@@ -86,8 +88,9 @@ def hill_climbing_with_sideways_moves(
     problem,
     max_sideways_moves: int,
     track_states: bool = False,
+    initial_board: Optional[Sequence[int]] = None,
 ):
-    current = problem.initial_board()
+    current = list(initial_board) if initial_board is not None else problem.initial_board()
     sideways_moves = 0
     history: List[int] = [problem.conflicts(current)]
     states: Optional[List[List[int]]] = [current.copy()] if track_states else None

@@ -1,7 +1,6 @@
-import itertools
 import math
 import random
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from core.eight_queens_representation import EightQueensProblem
 
@@ -31,6 +30,9 @@ def compute_simulated_annealing(
     temperature: int = 100,
     cooling_func: int = 1,
     track_states: bool = True,
+    max_steps: int = 1000,
+    initial_board: Optional[Sequence[int]] = None,
+    rng: Optional[random.Random] = None,
 ):
     print("Cooling function:", "Linear" if cooling_func == 1 else "Logarithmic")
     a = input("Press Enter to start the Simulated Annealing computation...")
@@ -40,7 +42,10 @@ def compute_simulated_annealing(
         problem,
         temperature,
         cooling_func,
-        track_states
+        track_states,
+        max_steps,
+        initial_board=initial_board,
+        rng=rng,
     )
 
     best_solution, best_fitness, history, states = result
@@ -96,20 +101,23 @@ def simulated_annealing(
     problem,
     temperature,
     cooling_func,
-    track_states
+    track_states,
+    max_steps,
+    initial_board: Optional[Sequence[int]] = None,
+    rng: Optional[random.Random] = None,
 ):
-    rng = random.Random()
-    current = problem.initial_board()
+    generator = rng or random.Random()
+    current = list(initial_board) if initial_board is not None else problem.initial_board()
     history: List[int] = [problem.conflicts(current)]
     states: Optional[List[List[int]]] = [current.copy()] if track_states else None
 
-    for t in itertools.count(start=1):
-        T = schedule(t, cooling_func=cooling_func, initial_temp=temperature)
+    for t in range(max_steps):
+        T = schedule(t, cooling_func=cooling_func, initial_temp=temperature, max_steps=max_steps)
         if T <= 0:
             break
 
         neighbors = [problem.apply(current, mv) for mv in problem.neighbors(current)]
-        candidate = rng.choice(neighbors)
+        candidate = generator.choice(neighbors)
 
         current_conflicts = problem.conflicts(current)
         candidate_conflicts = problem.conflicts(candidate)
@@ -119,9 +127,7 @@ def simulated_annealing(
             current = candidate
         else:
             acceptance = math.exp(delta_conflicts / T)
-            print("Acceptance probability:", acceptance)
-            r = rng.random()
-            print("Random value:", r)
+            r = generator.random()
             if r < acceptance:
                 current = candidate
 
@@ -132,13 +138,13 @@ def simulated_annealing(
     return current, problem.fitness(current), history, states if track_states else None
 
 
-def schedule(t, cooling_func, initial_temp=100):
+def schedule(t, cooling_func, initial_temp=100, max_steps=1000):
     # print( f"Scheduling at time {t} with cooling function {cooling_func} and initial temp {initial_temp}" )
     if cooling_func == 1:
-        val = initial_temp - 0.1 * t # Linear cooling
+        val = 1 - ((t+1)  / max_steps) # Linear cooling
+        # print ( f"Linear cooling value at time {t}: {val}" )
         return val if val > 0 else 0  
     elif cooling_func == 2:
-        val = initial_temp / math.log(t + 1) # Logarithmic cooling
-        if val - 0.1 < 10:
-            return 0
-        return val
+        val = initial_temp / math.log(t + 10) # Logarithmic cooling
+        # print( f"Logarithmic cooling value at time {t}: {val}" )
+        return val if (val - 10) > 0 else 0

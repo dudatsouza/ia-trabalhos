@@ -6,10 +6,12 @@ from typing import Dict, Iterable, Tuple
 import matplotlib.pyplot as plt
 
 DEFAULT_ALG_MAP: Tuple[Tuple[str, str], ...] = (
-    ("Hill Climbing", "HillClimbing"),
-    ("Sideways", "Sideways"),
-    ("Random Restarts", "RandomRestarts"),
-    ("Simulated Annealing", "SimulatedAnnealing"),
+    ("Sideways (10)", "Sideways-10"),
+    ("Sideways (100)", "Sideways-100"),
+    ("Restarts + Sideways", "RandomRestartsSideways"),
+    ("Restarts + Hill", "RandomRestartsHill"),
+    ("SA Linear", "SimulatedAnnealingLinear"),
+    ("SA Log", "SimulatedAnnealingLog"),
 )
 
 
