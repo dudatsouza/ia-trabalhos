@@ -1,6 +1,4 @@
-import math
-import random
-import itertools
+import math, random, itertools
 
 from core.eight_queens_representation import EightQueensProblem
 
@@ -40,7 +38,18 @@ def compute_simulated_annealing(problem: EightQueensProblem, temperature: int = 
 
     plot_search_history(history)
 
-    if best_fitness is not 0:
+    if best_solution:
+        for i in range(8):
+            for j in range(8):
+                if best_solution and best_solution[j] == i:
+                    print("Q", end=' ')
+                else:
+                    for mv in problem.neighbors(best_solution):
+                        if mv[0] == j and mv[1] == i:
+                            print(f"{problem.conflicts(problem.apply(best_solution, mv))}", end=' ')
+            print()
+
+    if best_fitness != 0:
         print("No solution found")
         print("Best solution:", best_solution)
         print("Best fitness (number of conflicts):", -best_fitness)
@@ -55,13 +64,13 @@ def compute_simulated_annealing(problem: EightQueensProblem, temperature: int = 
 
 
 def simulated_annealing(problem, temperature=100, cooling_func=2):
-    random.seed(42)
+    random.seed(123)
     current = problem.initial_board()
     history = []
     for t in itertools.count(start=1):
         history.append(-problem.fitness(current))
         T = schedule(t, cooling_func=cooling_func, initial_temp=temperature)
-        print( f"Temperature at step {t}: {T}" )
+        # print( f"Temperature at step {t}: {T}" )
         if T == 0:
             return current, problem.fitness(current), history
         
@@ -81,7 +90,7 @@ def simulated_annealing(problem, temperature=100, cooling_func=2):
 
 
 def schedule(t, cooling_func=2, initial_temp=100):
-    print( f"Scheduling at time {t} with cooling function {cooling_func} and initial temp {initial_temp}" )
+    # print( f"Scheduling at time {t} with cooling function {cooling_func} and initial temp {initial_temp}" )
     if cooling_func == 1:
         val = initial_temp - 0.1 * t # Linear cooling
         return val if val > 0 else 0  

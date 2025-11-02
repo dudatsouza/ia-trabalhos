@@ -24,7 +24,7 @@ def plot_search_history(history):
     plt.legend()
     plt.show()
 
-def compute_hill_climbing_with_random_restarts(problem: EightQueensProblem, allow_sideways: bool = False, max_moves_per_restart: int = 100, max_restarts: int = 1000):
+def compute_hill_climbing_with_random_restarts(problem: EightQueensProblem, allow_sideways: bool = False, max_moves_per_restart: int = 100, max_restarts: int = 100):
     # CALL THE HILL CLIMBING WITH RANDOM RESTARTS AND MEASURE TIME/MEMORY
     result, elapsed_time, memory_used, current, peak = measure_time_memory(
         hill_climbing_with_random_restarts,
@@ -38,7 +38,18 @@ def compute_hill_climbing_with_random_restarts(problem: EightQueensProblem, allo
 
     plot_search_history(history)
 
-    if best_fitness is not 0:
+    if best_solution:
+        for i in range(8):
+            for j in range(8):
+                if best_solution and best_solution[j] == i:
+                    print("Q", end=' ')
+                else:
+                    for mv in problem.neighbors(best_solution):
+                        if mv[0] == j and mv[1] == i:
+                            print(f"{problem.conflicts(problem.apply(best_solution, mv))}", end=' ')
+            print()
+
+    if best_fitness != 0:
         print("No solution found")
         print("Best solution:", best_solution)
         print("Best fitness (number of conflicts):", -best_fitness)
@@ -54,7 +65,7 @@ def compute_hill_climbing_with_random_restarts(problem: EightQueensProblem, allo
         print(f"Current memory usage: {current / 1024:.3f} KB; Peak: {peak / 1024:.3f} KB")
 
 
-def hill_climbing_with_random_restarts(problem, allow_sideways=False, max_moves_per_restart=100, max_restarts=1000):
+def hill_climbing_with_random_restarts(problem, allow_sideways=False, max_moves_per_restart=100, max_restarts=100):
     best_solution = None
     best_fitness = float('-inf')
     restart_count = 0

@@ -1,5 +1,6 @@
 # Representation: board[c] = line (0..7) of queen in column c (0..7)
 from typing import List, Iterable, Tuple
+import random
 
 Board = List[int]
 Move = Tuple[int, int]  # (column, new_line)
@@ -8,19 +9,15 @@ N = 8
 
 class EightQueensProblem:
     @staticmethod
-    def initial_board(random = True) -> Board:
-        # if not random:
-            # Fixed initial board for testing
-        
-        return [0, 1, 2, 3, 4, 5, 6, 7]
-            
-        # Randomly, with fixed seed for reproducibility
-        import random
-        random.seed(42)
+    def initial_board(r = True) -> Board:
+        if not r:
+            return [0, 1, 2, 3, 4, 5, 6, 7]
+
+        # Randomly shuffle the board
         random_board = [i for i in range(N)]
         random.shuffle(random_board)
 
-        print("Initial board:", random_board)
+        # print("Initial board:", random_board)
 
         return random_board
 

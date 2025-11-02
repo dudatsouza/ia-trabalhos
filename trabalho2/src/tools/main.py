@@ -1,7 +1,6 @@
 # EXTERNAL IMPORTS
-import os, sys
-from pathlib import Path
-import traceback                 
+import os, sys, traceback
+from pathlib import Path     
 
 # ADJUST SYSTEM PATH TO INCLUDE THE SRC FOLDER FOR MODULE RESOLUTION
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -37,10 +36,11 @@ def show_algorithm_menu(algorithm: str):
         print("3. Allow Sideways Moves")
         print("4. Don't Allow Sideways Moves")
         print("5. Set Max Moves per Restart (default = 100)")
-        print("6. Back to Main Menu")
+        print("6. Set Max Restarts (default = 100)")
+        print("7. Back to Main Menu")
     elif algorithm == "simulated_annealing":
         print("3. Set Initial Temperature (default = 100)")
-        print("4. Set Cooling Function (default = logarithmic)")
+        print("4. Set Cooling Function (default = linear)")
         print("5. Back to Main Menu")
 
 # GET OPTION FUNCTION
@@ -70,12 +70,6 @@ def get_option(max_option: int = 5) -> int:
 #     print(f"{'Tempo médio (ms)':<{col_metrica_width}} | "
 #             f"{metrics['Dijkstra avg time (ms)']:>{col_data_width}} | "
 #             f"{metrics['Bidirectional avg time (ms)']:>{col_data_width}}")
-#     print(f"{'Nós médios':<{col_metrica_width}} | "
-#             f"{metrics['Dijkstra avg nodes']:>{col_data_width}} | "
-#             f"{metrics['Bidirectional avg nodes']:>{col_data_width}}")
-#     print(f"{'Custo médio':<{col_metrica_width}} | "
-#             f"{metrics['Dijkstra avg cost']:>{col_data_width}} | "
-#             f"{metrics['Bidirectional avg cost']:>{col_data_width}}")
 #     print(f"{'Memória Peak (KB)':<{col_metrica_width}} | "
 #             f"{metrics['Dijkstra avg peak (KB)']:>{col_data_width}} | "
 #             f"{metrics['Bidirectional avg peak (KB)']:>{col_data_width}}")
@@ -120,7 +114,7 @@ def get_option(max_option: int = 5) -> int:
 #         print("Informed GIF generation complete.")
 
 # MAIN FUNCTION HANDLING MENU INTERACTIONS AND SEARCH EXECUTIONS
-def main():  
+def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     problem = EightQueensProblem()
@@ -151,14 +145,14 @@ def main():
         elif option == 2:
             allow_sideways = False
             max_moves_per_restart = 100
-
+            max_restarts = 100
             while True:
                 show_algorithm_menu("random_restarts")
-                sub_option = get_option(6)
+                sub_option = get_option(7)
 
                 if sub_option == 1:
                     print("Running Hill Climbing with Random Restarts...")
-                    compute_hill_climbing_with_random_restarts(problem, allow_sideways, max_moves_per_restart)
+                    compute_hill_climbing_with_random_restarts(problem, allow_sideways, max_moves_per_restart, max_restarts)
                 elif sub_option == 2:
                     print("Visualizing Hill Climbing with Random Restarts...")
                     # show_visualize_hill_climbing_with_random_restarts(problem, allow_sideways, max_moves_per_restart)
@@ -172,6 +166,9 @@ def main():
                     max_moves_per_restart = int(input("Enter the maximum number of moves per restart: "))
                     print(f"Max moves per restart set to {max_moves_per_restart}.")
                 elif sub_option == 6:
+                    max_restarts = int(input("Enter the maximum number of restarts: "))
+                    print(f"Max restarts set to {max_restarts}.")
+                elif sub_option == 7:
                     break
 
         elif option == 3:
