@@ -1,0 +1,14 @@
+matplotlib==3.8
+
+# tkinter já faz parte da biblioteca padrão do Python
+# Linux (Debian/Ubuntu) caso não esteja instalado:
+# sudo apt-get install python3-tk
+# Windows/macOS: já incluso no Python
+
+
+# Observação:
+# Embora seja possível instalar todas as dependências com pip usando este arquivo, a forma mais fácil e completa de executar o projeto é utilizando o Poetry.
+
+# Exemplo:
+# poetry install
+# poetry run python -m tools.run_gui
