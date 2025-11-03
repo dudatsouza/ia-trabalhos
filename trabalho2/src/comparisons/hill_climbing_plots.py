@@ -11,7 +11,7 @@ DEFAULT_ALG_MAP: Tuple[Tuple[str, str], ...] = (
     ("Restarts + Sideways", "RandomRestartsSideways"),
     ("Restarts + Hill", "RandomRestartsHill"),
     ("SA Linear", "SimulatedAnnealingLinear"),
-    ("SA Log", "SimulatedAnnealingLog"),
+    ("SA Exp", "SimulatedAnnealingExponential"),
 )
 
 

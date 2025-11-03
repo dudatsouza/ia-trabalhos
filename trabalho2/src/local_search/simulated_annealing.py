@@ -27,14 +27,14 @@ def plot_search_history(history):
 
 def compute_simulated_annealing(
     problem: EightQueensProblem,
-    temperature: int = 100,
+    temperature: int = 400,
     cooling_func: int = 1,
     track_states: bool = True,
     max_steps: int = 1000,
     initial_board: Optional[Sequence[int]] = None,
     rng: Optional[random.Random] = None,
 ):
-    print("Cooling function:", "Linear" if cooling_func == 1 else "Logarithmic")
+    print("Cooling function:", "Linear" if cooling_func == 1 else "Exponential")
     a = input("Press Enter to start the Simulated Annealing computation...")
     # CALL THE SIMULATED ANNEALING AND MEASURE TIME/MEMORY
     result, elapsed_time, memory_used, current, peak = measure_time_memory(
@@ -110,9 +110,10 @@ def simulated_annealing(
     current = list(initial_board) if initial_board is not None else problem.initial_board()
     history: List[int] = [problem.conflicts(current)]
     states: Optional[List[List[int]]] = [current.copy()] if track_states else None
+    T = temperature
 
     for t in range(max_steps):
-        T = schedule(t, cooling_func=cooling_func, initial_temp=temperature, max_steps=max_steps)
+        T = schedule(t, cooling_func=cooling_func, initial_temp=T, max_steps=max_steps)
         if T <= 0:
             break
 
@@ -127,7 +128,7 @@ def simulated_annealing(
             current = candidate
         else:
             acceptance = math.exp(delta_conflicts / T)
-            r = generator.random()
+            r = random.uniform(0, 1)
             if r < acceptance:
                 current = candidate
 
@@ -138,13 +139,13 @@ def simulated_annealing(
     return current, problem.fitness(current), history, states if track_states else None
 
 
-def schedule(t, cooling_func, initial_temp=100, max_steps=1000):
+def schedule(t, cooling_func, initial_temp=400, max_steps=1000):
     # print( f"Scheduling at time {t} with cooling function {cooling_func} and initial temp {initial_temp}" )
     if cooling_func == 1:
         val = 1 - ((t+1)  / max_steps) # Linear cooling
         # print ( f"Linear cooling value at time {t}: {val}" )
         return val if val > 0 else 0  
     elif cooling_func == 2:
-        val = initial_temp / math.log(t + 10) # Logarithmic cooling
-        # print( f"Logarithmic cooling value at time {t}: {val}" )
-        return val if (val - 10) > 0 else 0
+        val = initial_temp * 0.99 # Exponential cooling
+        # print( f"Exponential cooling value at time {t}: {val}" )
+        return val if val > 0 else 0

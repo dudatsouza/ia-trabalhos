@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import threading
 import tkinter as tk
@@ -15,9 +16,9 @@ if SRC_PATH not in sys.path:
 import matplotlib.pyplot as plt
 from comparisons.compare_hill_climbing import compare_hill_climbing_algorithms
 from core.eight_queens_representation import EightQueensProblem
-from greedy_local_search.random_restarts import hill_climbing_with_random_restarts
-from greedy_local_search.sideways_moves import hill_climbing_with_sideways_moves
-from greedy_local_search.simulated_annealing import simulated_annealing
+from local_search.random_restarts import hill_climbing_with_random_restarts
+from local_search.sideways_moves import hill_climbing_with_sideways_moves
+from local_search.simulated_annealing import simulated_annealing
 from tools.measure_time_memory import measure_time_memory
 from visualization.queen_gif import generate_gif_from_states, diff_states
 
@@ -31,6 +32,7 @@ BEST_CANDIDATE_COLOR = "#f5b7b1"
 
 class App(tk.Tk):
     def __init__(self) -> None:
+        random.seed(42)
         super().__init__()
         self.title("Eight Queens - Hill Climbing Playground")
         self.geometry("1100x780")
@@ -52,7 +54,7 @@ class App(tk.Tk):
         self.rr_allow_sideways_var = tk.BooleanVar(value=True)
         self.rr_max_moves_var = tk.IntVar(value=20)
         self.rr_max_restarts_var = tk.IntVar(value=100)
-        self.annealing_temp_var = tk.DoubleVar(value=100.0)
+        self.annealing_temp_var = tk.DoubleVar(value=400.0)
         self.annealing_cooling_var = tk.StringVar(value="linear")
         self.annealing_steps_var = tk.IntVar(value=1000)
         self.animation_delay_var = tk.IntVar(value=400)
@@ -127,7 +129,7 @@ class App(tk.Tk):
         ttk.Label(annealing_tab, text="Initial temperature").grid(row=1, column=0, padx=4, pady=6, sticky="w")
         ttk.Spinbox(annealing_tab, from_=10, to=500, increment=10, textvariable=self.annealing_temp_var, width=8).grid(row=1, column=1, padx=4, pady=6, sticky="w")
         ttk.Label(annealing_tab, text="Cooling function").grid(row=2, column=0, padx=4, pady=6, sticky="w")
-        ttk.Combobox(annealing_tab, values=("linear", "logarithmic"), textvariable=self.annealing_cooling_var, state="readonly", width=12).grid(row=2, column=1, padx=4, pady=6, sticky="w")
+        ttk.Combobox(annealing_tab, values=("linear", "exponential"), textvariable=self.annealing_cooling_var, state="readonly", width=12).grid(row=2, column=1, padx=4, pady=6, sticky="w")
         ttk.Label(annealing_tab, text="Max steps").grid(row=3, column=0, padx=4, pady=6, sticky="w")
         ttk.Spinbox(annealing_tab, from_=50, to=5000, increment=50, textvariable=self.annealing_steps_var, width=8).grid(row=3, column=1, padx=4, pady=6, sticky="w")
 
@@ -572,7 +574,7 @@ class App(tk.Tk):
                 random_max_restarts=100,
                 annealing_temperature=self.annealing_temp_var.get(),
                 annealing_linear_max_steps=self.annealing_steps_var.get(),
-                annealing_log_max_steps=self.annealing_steps_var.get(),
+                annealing_exp_max_steps=self.annealing_steps_var.get(),
             )
 
         metrics, elapsed_ms, rss_delta, current_bytes, peak_bytes = measure_time_memory(fn)

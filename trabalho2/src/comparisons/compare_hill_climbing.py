@@ -9,9 +9,9 @@ from typing import Dict, List, Sequence, Tuple
 
 from core.eight_queens_representation import EightQueensProblem
 
-from greedy_local_search.random_restarts import hill_climbing_with_random_restarts
-from greedy_local_search.sideways_moves import hill_climbing_with_sideways_moves
-from greedy_local_search.simulated_annealing import simulated_annealing
+from local_search.random_restarts import hill_climbing_with_random_restarts
+from local_search.sideways_moves import hill_climbing_with_sideways_moves
+from local_search.simulated_annealing import simulated_annealing
 
 from tools.measure_time_memory import measure_time_memory
 
@@ -99,9 +99,9 @@ def compare_hill_climbing_algorithms(
 	sideways_limits: Sequence[int] = (10, 100),
 	random_max_moves: int = 20,
 	random_max_restarts: int = 100,
-	annealing_temperature: float = 100.0,
+	annealing_temperature: float = 400.0,
 	annealing_linear_max_steps: int = 1000,
-	annealing_log_max_steps: int = 1000,
+	annealing_exp_max_steps: int = 1000,
 ) -> Dict[str, str]:
 	"""Runs the configured hill-climbing variants and returns aggregated metrics."""
 
@@ -112,7 +112,7 @@ def compare_hill_climbing_algorithms(
 		"rr_sideways": 2_000,
 		"rr_hill": 3_000,
 		"anneal_linear": 4_000,
-		"anneal_log": 5_000,
+		"anneal_exp": 5_000,
 	}
 
 	# Sideways moves variants -------------------------------------------------
@@ -197,14 +197,14 @@ def compare_hill_climbing_algorithms(
 	# Simulated annealing variants --------------------------------------------
 	for cooling, label, max_steps in (
 		(1, "SimulatedAnnealingLinear", annealing_linear_max_steps),
-		(2, "SimulatedAnnealingLog", annealing_log_max_steps),
+		(2, "SimulatedAnnealingExponential", annealing_exp_max_steps),
 	):
 		annealing_stats: List[RunStats] = []
 		annealing_success = 0
 
 		for idx, board_seed in enumerate(base_boards):
 			problem = EightQueensProblem()
-			offset_key = "anneal_linear" if cooling == 1 else "anneal_log"
+			offset_key = "anneal_linear" if cooling == 1 else "anneal_exp"
 			rng = random.Random(seed_offsets[offset_key] + idx)
 			result, elapsed, memory_used, current_bytes, peak_bytes = measure_time_memory(
 				simulated_annealing,

@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 from tools.measure_time_memory import measure_time_memory
 
-from greedy_local_search.sideways_moves import hill_climbing_with_sideways_moves
-from greedy_local_search.hill_climbing import hill_climbing
+from local_search.sideways_moves import hill_climbing_with_sideways_moves
+from local_search.hill_climbing import hill_climbing
 
 def plot_search_history(history):
     """Plots the number of conflicts over iterations."""
