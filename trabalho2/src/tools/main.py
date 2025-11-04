@@ -90,7 +90,7 @@ def show_current_board(problem):
     print()
 
 # VISUALIZATION FUNCTION: GENERATE GIF VISUALIZATION FOR THE ALGORITHM
-def show_visualize_algorithm(algorithm_name: str, states, history, problem):
+def show_visualize_algorithm(algorithm_name: str, states, history, problem, specification):
     try:
         current_file = Path(__file__).resolve()
         repo_root = current_file.parents[2] if 'tools' in str(current_file) else current_file.parents[1]
@@ -101,7 +101,7 @@ def show_visualize_algorithm(algorithm_name: str, states, history, problem):
     output_dir.mkdir(parents=True, exist_ok=True)
     
     safe_name = algorithm_name.lower().replace(' ', '_').replace('-', '_')
-    out_name = f'visualization-{safe_name}.gif'
+    out_name = f'visualization-{safe_name}-{specification}.gif'
     out_path = output_dir / out_name
     
     try:
@@ -114,7 +114,7 @@ def show_visualize_algorithm(algorithm_name: str, states, history, problem):
         print(f"GIF saved to: {out_path}")
     except Exception as e:
         tb = traceback.format_exc()
-        print(f"*** ERROR generating GIF for {algorithm_name}: {e} ***\n{tb}\n")
+        print(f"*** ERROR generating GIF for {algorithm_name}-{specification}: {e} ***\n{tb}\n")
 
 # COMPARISON FUNCTION: RUN COMPARISON OF HILL CLIMBING WITH CONFIGURABLE PARAMETERS
 def compare_algorithms(problem):
@@ -239,14 +239,14 @@ def main():
                     print("="*60)
                 elif sub_option == 2:
                     print("\n" + "="*60)
-                    print("Visualizing Hill Climbing with Sideways Moves Allowed...")
+                    print(f"Visualizing Hill Climbing with Sideways Moves Allowed {sideways_limit}...")
                     print("="*60)
                     try:
                         board, history, states = hill_climbing_with_sideways_moves(
                             problem, sideways_limit, track_states=True
                         )
                         if states and len(states) > 1:
-                            show_visualize_algorithm("Hill Climbing Sideways", states, history, problem)
+                            show_visualize_algorithm("Hill Climbing Sideways", states, history, problem, sideways_limit)
                         else:
                             print("No state transitions to visualize.")
                     except Exception as e:
@@ -282,8 +282,9 @@ def main():
                         board, best_fitness, restart_count, history, states = hill_climbing_with_random_restarts(
                             problem, allow_sideways, max_moves_per_restart, max_restarts, track_states=True
                         )
+                        specification = "sideways" if allow_sideways else "hill"
                         if states and len(states) > 1:
-                            show_visualize_algorithm("Hill Climbing Random Restarts", states, history, problem)
+                            show_visualize_algorithm("Hill Climbing Random Restarts", states, history, problem, specification)
                         else:
                             print("No state transitions to visualize.")
                     except Exception as e:
@@ -332,7 +333,7 @@ def main():
                             problem, temperature, cooling_func, track_states=True, max_steps=max_steps
                         )
                         if states and len(states) > 1:
-                            show_visualize_algorithm("Simulated Annealing", states, history, problem)
+                            show_visualize_algorithm("Simulated Annealing", states, history, problem, cooling_name)
                         else:
                             print("No state transitions to visualize.")
                     except Exception as e:
