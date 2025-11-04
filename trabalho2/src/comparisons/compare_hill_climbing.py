@@ -248,11 +248,12 @@ def compare_hill_climbing_algorithms(
 
 	if plot_hill_climbing_metrics:
 		try:
-			plot_hill_climbing_metrics(metrics, out_dir=repo_root / "data" / "output" / "graphics" / "hill_climbing")
+			plot_hill_climbing_metrics(metrics, out_dir=repo_root / "data" / "output" / "graphics")
 		except Exception:
 			pass
 
 	return metrics
+
 
 
 __all__ = ["compare_hill_climbing_algorithms"]

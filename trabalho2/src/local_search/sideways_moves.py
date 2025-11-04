@@ -1,6 +1,7 @@
 # IMPORTS EXTERNAL
 import matplotlib.pyplot as plt
 from typing import Dict, List, Optional, Sequence, Tuple
+from pathlib import Path
 
 # IMPORTS INTERNAL
 # CORE
@@ -9,20 +10,24 @@ from core.eight_queens_representation import EightQueensProblem
 from tools.measure_time_memory import measure_time_memory
 
 # PLOT THE NUMBER OF CONFLICTS OVER ITERATIONS
-def plot_search_history(history: List[int]) -> None:
+def plot_search_history(history: List[int], specification: int) -> None:
     if not history:
         print("No history to plot.")
         return
+    
+    repo_root = Path(__file__).resolve().parents[2]
+    out_dir = repo_root / "data" / "output" / "graphics" / "progress"
 
     plt.figure(figsize=(10, 6))
     plt.plot(history, marker='o', linestyle='-', markersize=4)
-    plt.title("Hill Climbing Search Progress")
+    plt.title(f"Hill Climbing Search Progress - Sideways Moves - {specification}")
     plt.xlabel("Iteration")
     plt.ylabel("Number of Conflicts")
     plt.grid(True)
     # ADD A HORIZONTAL LINE AT 0 TO REPRESENT THE GOAL
     plt.axhline(y=0, color='r', linestyle='--', label='Goal (0 Conflicts)')
     plt.legend()
+    plt.savefig(out_dir / f"progress-sideways-{specification}.png", dpi=160)
     plt.show()
 
 # COMPUTE HILL CLIMBING WITH SIDEWAYS MOVES AND PRINT METRICS
@@ -44,7 +49,7 @@ def compute_hill_climbing_with_sideways_moves(
     best_solution, history, states = result
 
     # PLOT THE SEARCH HISTORY
-    plot_search_history(history)
+    plot_search_history(history, max_sideways_moves)
 
     if best_solution:
         for i in range(8):

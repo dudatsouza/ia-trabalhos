@@ -155,7 +155,7 @@ def compare_algorithms(problem):
         current_file = Path(__file__).resolve()
         repo_root = current_file.parents[2] if 'tools' in str(current_file) else current_file.parents[1]
         metrics_path = repo_root / "data" / "output" / "metrics" / "metrics_hill_climbing.json"
-        plot_path = repo_root / "data" / "output" / "graphics" / "hill_climbing"
+        plot_path = repo_root / "data" / "output" / "graphics"
         print(f"\nDetailed metrics saved to: {metrics_path}")
         plot_hill_climbing_metrics(metrics, out_dir=plot_path)
         print(f"\nDetailed graphic saved to: {plot_path}")
@@ -194,6 +194,7 @@ def print_comparison_table(metrics):
     # Print metrics
     metric_keys = [
         ('avg time (ms)', 'Average Time (ms)'),
+        ('avg current (KB)', 'Average Current (KB)'),
         ('avg conflicts', 'Average Conflicts'),
         ('success count', 'Success Rate'),
         ('avg steps', 'Average Steps'),
@@ -319,7 +320,7 @@ def main():
                     cooling_name = 'linear' if cooling_func == 1 else 'exponential'
                     print(f"Temperature: {temperature}, Cooling: {cooling_name}, Max steps: {max_steps}")
                     print("="*60)
-                    compute_simulated_annealing(problem, temperature=400, cooling_func=2, max_steps=100)
+                    compute_simulated_annealing(problem, temperature, cooling_func, max_steps)
 
                     print("="*60)
                 elif sub_option == 2:
@@ -328,6 +329,7 @@ def main():
                     cooling_name = 'linear' if cooling_func == 1 else 'exponential'
                     print(f"Temperature: {temperature}, Cooling: {cooling_name}, Max steps: {max_steps}")
                     print("="*60)
+
                     try:
                         board, fitness, history, states = simulated_annealing(
                             problem, temperature, cooling_func, track_states=True, max_steps=max_steps

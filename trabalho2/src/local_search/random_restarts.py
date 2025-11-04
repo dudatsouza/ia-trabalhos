@@ -2,6 +2,7 @@
 import random
 import matplotlib.pyplot as plt
 from typing import List, Optional, Sequence
+from pathlib import Path
 
 # IMPORTS INTERNAL
 # CORE
@@ -13,20 +14,26 @@ from local_search.sideways_moves import hill_climbing_with_sideways_moves
 from local_search.hill_climbing import hill_climbing
 
 # PLOTS THE NUMBER OF CONFLICTS OVER ITERATIONS
-def plot_search_history(history):
+def plot_search_history(history, allow_sideways):
     if not history:
         print("No history to plot.")
         return
+        
+    repo_root = Path(__file__).resolve().parents[2]
+    out_dir = repo_root / "data" / "output" / "graphics" / "progress"
+
+    specification = "sideways" if allow_sideways else "hill"
 
     plt.figure(figsize=(10, 6))
     plt.plot(history, marker='o', linestyle='-', markersize=4)
-    plt.title("Hill Climbing Search Progress")
+    plt.title(f"Hill Climbing Search Progress - Random Restarts - {specification}")
     plt.xlabel("Iteration")
     plt.ylabel("Number of Conflicts")
     plt.grid(True)
     # ADD A HORIZONTAL LINE AT 0 TO REPRESENT THE GOAL
     plt.axhline(y=0, color='r', linestyle='--', label='Goal (0 Conflicts)')
     plt.legend()
+    plt.savefig(out_dir / f"progress-random-{specification}.png", dpi=160)
     plt.show()
 
 # COMPUTES HILL CLIMBING WITH RANDOM RESTARTS AND PRINTS METRICS
@@ -55,7 +62,7 @@ def compute_hill_climbing_with_random_restarts(
     best_solution, best_fitness, restart_count, history, states = result
 
     # PLOT THE SEARCH HISTORY
-    plot_search_history(history)
+    plot_search_history(history, allow_sideways)
 
     if best_solution:
         for i in range(8):

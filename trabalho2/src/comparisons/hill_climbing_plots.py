@@ -39,7 +39,7 @@ def plot_hill_climbing_metrics(
 ) -> None:
     if out_dir is None:
         repo_root = Path(__file__).resolve().parents[2]
-        out_dir = repo_root / "data" / "output" / "graphics" / "hill_climbing"
+        out_dir = repo_root / "data" / "output" / "graphics"
     _ensure_dir(out_dir)
 
     # ----- GERAL -----
@@ -55,20 +55,21 @@ def plot_hill_climbing_metrics(
         "Success rate": [_parse_success(metrics.get(f"{key} success count", "0/1")) for _, key in algorithms],
     }
 
-    fig, axes = plt.subplots(3, 2, figsize=(14, 14))
-    axes = axes.flatten()
-
-    for i, (title, values) in enumerate(data.items()):
-        axes[i].bar(labels, values, color="#3498db")
-        axes[i].set_title(title)
-        axes[i].tick_params(axis="x", rotation=20)
+    for title, values in data.items():
+        print(title)
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.bar(labels, values, color="#3498db")
+        ax.set_title(title, fontsize=14, fontweight="bold")
+        ax.tick_params(axis="x", rotation=20)
         if "rate" in title.lower():
-            axes[i].set_ylim(0, 1)
-
-    fig.suptitle("General Metrics — Hill Climbing Algorithms", fontsize=14, fontweight="bold")
-    fig.tight_layout()
-    fig.savefig(out_dir / "general_metrics.png", dpi=160)
-    plt.close(fig)
+            ax.set_ylim(0, 1)
+        fig.tight_layout()
+        clean_title = title.lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "_")
+        filename = f"general_{clean_title}.png"
+        save_path = out_dir / "general" / filename
+        fig.savefig(save_path, dpi=160)
+        print(f"Salvo em: {save_path}")
+        plt.close(fig)
 
     # ----- COMPARAÇÕES -----
     comparisons = [
@@ -137,7 +138,9 @@ def plot_hill_climbing_metrics(
         ax.legend()
         ax.grid(axis="y", linestyle="--", alpha=0.5)
         fig.tight_layout()
-        fig.savefig(out_dir / f"{fname}.png", dpi=160)
+        save_path = out_dir / "comparisons" / f"{fname}.png"
+        fig.savefig(out_dir / "comparisons" / f"{fname}.png", dpi=160)
+        print(f"Salvo em: {save_path}")
         plt.close(fig)
 
 

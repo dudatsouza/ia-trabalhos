@@ -3,26 +3,33 @@ import math
 import random
 from typing import List, Optional, Sequence
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 # IMPORTS INTERNAL
 from core.eight_queens_representation import EightQueensProblem
 from tools.measure_time_memory import measure_time_memory
 
 # PLOT FUNCTION
-def plot_search_history(history: List[int]) -> None:
+def plot_search_history(history: List[int], cooling_func: int) -> None:
     if not history:
         print("No history to plot.")
         return
+    
+    repo_root = Path(__file__).resolve().parents[2]
+    out_dir = repo_root / "data" / "output" / "graphics" / "progress"
+
+    specification = "linear" if cooling_func==1 else "exponencial"
 
     plt.figure(figsize=(10, 6))
     plt.plot(history, marker='o', linestyle='-', markersize=4)
-    plt.title("Hill Climbing Search Progress")
+    plt.title(f"Hill Climbing Search Progress - Simulated Annealing - {specification}")
     plt.xlabel("Iteration")
     plt.ylabel("Number of Conflicts")
     plt.grid(True)
     # ADD A HORIZONTAL LINE AT 0 TO REPRESEN THE GOAL
     plt.axhline(y=0, color='r', linestyle='--', label='Goal (0 Conflicts)')
     plt.legend()
+    plt.savefig(out_dir / f"progress-simulated-{specification}.png", dpi=160)
     plt.show()
 
 # MAIN EXECUTION FUNCTION
@@ -36,7 +43,7 @@ def compute_simulated_annealing(
     rng: Optional[random.Random] = None,
 ):
     print("Cooling function:", "Linear" if cooling_func == 1 else "Exponential")
-    a = input("Press Enter to start the Simulated Annealing computation...")
+    
     # CALL THE SIMULATED ANNEALING AND MEASURE TIME/MEMORY
     result, elapsed_time, memory_used, current, peak = measure_time_memory(
         simulated_annealing,
@@ -51,7 +58,7 @@ def compute_simulated_annealing(
 
     best_solution, best_fitness, history, states = result
 
-    plot_search_history(history)
+    plot_search_history(history, cooling_func)
 
     if best_solution:
         for i in range(8):
