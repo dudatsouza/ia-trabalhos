@@ -240,7 +240,7 @@ Para instalar o projeto, siga os passos abaixo:
 
 <div align="center">
   <br><br>
-     <i>Guilherme Alvarenga de Azevedo - Graduando - 4º Período de Engenharia de Computação @ CEFET-MG</i>
+     <i>Guilherme Alvarenga de Azevedo - Graduando - 6º Período de Engenharia de Computação @ CEFET-MG</i>
   <br><br>
   
   [![Gmail][gmail-badge]][gmail-autor1]
@@ -249,7 +249,7 @@ Para instalar o projeto, siga os passos abaixo:
   
   
   <br><br>
-     <i>Maria Eduarda Teixeira Souza - Graduando - 4º Período de Engenharia de Computação @ CEFET-MG</i>
+     <i>Maria Eduarda Teixeira Souza - Graduando - 6º Período de Engenharia de Computação @ CEFET-MG</i>
   <br><br>
   
   [![Gmail][gmail-badge]][gmail-autor2]
