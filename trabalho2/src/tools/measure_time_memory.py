@@ -1,8 +1,7 @@
-# EXTERNAL IMPORTS
+# IMPORTS EXTERNAL
 import time
 import tracemalloc
-
-# OPTIONAL EXTERNAL IMPORT
+# OPTIONAL
 try:
     import psutil
 except Exception:

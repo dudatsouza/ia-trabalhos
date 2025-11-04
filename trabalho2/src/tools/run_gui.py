@@ -1,3 +1,4 @@
+# IMPORTS EXTERNAL
 import os
 import random
 import sys
@@ -7,28 +8,34 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
+import matplotlib.pyplot as plt
 
-# Ensure imports resolve when running the script directly
+# ADJUST SYSTEM PATH TO INCLUDE THE SRC FOLDER FOR MODULE RESOLUTION
 SRC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 
-import matplotlib.pyplot as plt
-from comparisons.compare_hill_climbing import compare_hill_climbing_algorithms
+# IMPORTS INTERNAL
+# CORE
 from core.eight_queens_representation import EightQueensProblem
+# TOOLS
+from tools.measure_time_memory import measure_time_memory
+# LOCAL SEARCH
 from local_search.random_restarts import hill_climbing_with_random_restarts
 from local_search.sideways_moves import hill_climbing_with_sideways_moves
 from local_search.simulated_annealing import simulated_annealing
-from tools.measure_time_memory import measure_time_memory
+# COMPARISON
+from comparisons.compare_hill_climbing import compare_hill_climbing_algorithms
+# VISUALIZATION
 from visualization.queen_gif import generate_gif_from_states, diff_states
 
+# CONSTANTS FOR RENDERING
 BOARD_SIZE = 8
 LIGHT_COLOR = "#f0d9b5"
 DARK_COLOR = "#b58863"
 HIGHLIGHT_FROM = "#f9e79f"
 HIGHLIGHT_TO = "#82e0aa"
 BEST_CANDIDATE_COLOR = "#f5b7b1"
-
 
 class App(tk.Tk):
     def __init__(self) -> None:
@@ -65,7 +72,7 @@ class App(tk.Tk):
         self._build_ui()
         self.reset_board()
 
-    # UI -----------------------------------------------------------------
+    # BUILD THE USER INTERFACE 
     def _build_ui(self) -> None:
         root = ttk.Frame(self, padding=12)
         root.pack(fill=tk.BOTH, expand=True)
@@ -151,7 +158,7 @@ class App(tk.Tk):
         status_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
         ttk.Label(status_frame, textvariable=self.status_var).pack(side=tk.LEFT)
 
-    # Helpers ------------------------------------------------------------
+    # RESETS THE BOARD TO A RANDOM STARTING STATE
     def reset_board(self) -> None:
         board = self.problem.initial_board()
         conflicts = self.problem.conflicts(board)
@@ -163,15 +170,18 @@ class App(tk.Tk):
         self._log(f"Reset board. Initial conflicts: {conflicts}\n")
         self._set_status("Ready")
 
+    # UPDATE THE STATUS MESSAGE IN THE UI FOOTER
     def _set_status(self, msg: str) -> None:
         self.status_var.set(msg)
 
+    # LOGS A MESSAGE IN THE LOG
     def _log(self, text: str) -> None:
         self.log_text.configure(state=tk.NORMAL)
         self.log_text.insert(tk.END, text)
         self.log_text.see(tk.END)
         self.log_text.configure(state=tk.DISABLED)
 
+    # DRAWS THE BOARD, QUEENS, CANDIDATE CELLS, AND CONFLICTS ON THE CANVAS
     def draw_board(
         self,
         board: Sequence[int],
@@ -261,9 +271,11 @@ class App(tk.Tk):
                 font=("Helvetica", 14, "bold"),
             )
 
+    # STARTS EXECUTING THE SIDEWAYS MOVES ALGORITHM (WITHOUT VISUALIZATION)
     def on_run_sideways(self) -> None:
         self._run_async("Sideways Moves", lambda: self._sideways_worker(False), status="Running Sideways Moves...")
 
+    # STARTS EXECUTING THE SIDEWAYS MOVES ALGORITHM (WITH VISUALIZATION)
     def on_visualize_sideways(self) -> None:
         self._run_async(
             "Sideways Moves",
@@ -271,6 +283,7 @@ class App(tk.Tk):
             status="Running Sideways Moves visualization...",
         )
 
+    # STARTS EXECUTING THE RANDOM RESTARTS ALGORITHM (WITHOUT VISUALIZATION)
     def on_run_random_restarts(self) -> None:
         self._run_async(
             "Random Restarts",
@@ -278,6 +291,7 @@ class App(tk.Tk):
             status="Running Random Restarts...",
         )
 
+    # STARTS EXECUTING THE RANDOM RESTARTS ALGORITHM (WITH VISUALIZATION)
     def on_visualize_random_restarts(self) -> None:
         self._run_async(
             "Random Restarts",
@@ -285,6 +299,7 @@ class App(tk.Tk):
             status="Running Random Restarts visualization...",
         )
 
+    # STARTS EXECUTING THE SIMULATED ANNEALING ALGORITHM (WITHOUT VISUALIZATION)
     def on_run_simulated_annealing(self) -> None:
         self._run_async(
             "Simulated Annealing",
@@ -292,6 +307,7 @@ class App(tk.Tk):
             status="Running Simulated Annealing...",
         )
 
+    # STARTS EXECUTING THE SIMULATED ANNEALING ALGORITHM (WITH VISUALIZATION)
     def on_visualize_simulated_annealing(self) -> None:
         self._run_async(
             "Simulated Annealing",
@@ -299,6 +315,7 @@ class App(tk.Tk):
             status="Running Simulated Annealing visualization...",
         )
 
+    # EXECUTES A BACKGROUND FUNCTION USING THREAD AND SCHEDULES CALLBACKS
     def _run_async(self, label: str, worker, *, status: Optional[str] = None) -> None:
         if self._animating:
             self.stop_animation()
@@ -306,6 +323,7 @@ class App(tk.Tk):
         thread = threading.Thread(target=self._run_worker, args=(label, worker), daemon=True)
         thread.start()
 
+    # WORKER WRAPPER THAT CATCHES EXCEPTIONS AND CALLS CALLBACKS IN THE MAIN THREAD
     def _run_worker(self, label: str, worker) -> None:
         try:
             result = worker()
@@ -313,6 +331,7 @@ class App(tk.Tk):
         except Exception as exc:
             self.after(0, lambda exc=exc: self._on_worker_failure(label, exc))
 
+    # HANDLES THE WORKER'S SUCCESS RESULT AND UPDATES THE UI AND INTERNAL STATES
     def _on_worker_success(self, label: str, result):
         board, states, history, metadata = result
         history = history or [self.problem.conflicts(board)]
@@ -342,10 +361,12 @@ class App(tk.Tk):
         else:
             self._set_status(f"{label} finished. Final conflicts: {final_conflicts}")
 
+    # HANDLES WORKER FAILURES AND DISPLAYS ERROR MESSAGES
     def _on_worker_failure(self, label: str, exc: Exception) -> None:
         self._set_status(f"Failed to run {label}: {exc}")
         messagebox.showerror("Error", f"{label} failed: {exc}")
 
+    # DISPLAY A GRAPH OF CONFLICT HISTORY USING MATPLOTLIB
     def _show_history_plot(self, label: str, history: Sequence[int]) -> None:
         if not history:
             messagebox.showinfo("No data", "No history available for visualization.")
@@ -362,7 +383,7 @@ class App(tk.Tk):
         except Exception as exc:
             messagebox.showerror("Error", f"Failed to display plot: {exc}")
 
-    # Workers ------------------------------------------------------------
+    # WORKER FOR SIDEWAYS MOVES: EXECUTES THE ALGORITHM AND COLLECTS METRICS
     def _sideways_worker(self, visualize: bool = False):
         limit = self.sideways_limit_var.get()
 
@@ -392,6 +413,7 @@ class App(tk.Tk):
 
         return board, states, history, metadata
 
+    # WORKER FOR RANDOM RESTARTS: EXECUTES THE ALGORITHM AND COLLECTS METRICS
     def _random_restarts_worker(self, visualize: bool = False):
         allow_sideways = self.rr_allow_sideways_var.get()
         max_moves = self.rr_max_moves_var.get()
@@ -433,6 +455,7 @@ class App(tk.Tk):
             metadata["current_memory_kb"] = current_bytes / 1024
         return board, states, history, metadata
 
+    # WORKER FOR SIMULATED ANNEALING: EXECUTES THE ALGORITHM AND COLLECTS METRICS
     def _annealing_worker(self, visualize: bool = False):
         temp = self.annealing_temp_var.get()
         cooling = self.annealing_cooling_var.get()
@@ -470,7 +493,7 @@ class App(tk.Tk):
             metadata["current_memory_kb"] = current_bytes / 1024
         return board, states, history, metadata
 
-    # Animation ----------------------------------------------------------
+    # STARTS ANIMATION OF THE CURRENT STATE SEQUENCE
     def start_animation(self) -> None:
         if not self.current_states:
             messagebox.showinfo("No data", "Run an algorithm first.")
@@ -484,6 +507,7 @@ class App(tk.Tk):
         self._animate_step()
         self._set_status(f"Playing animation for {self.current_algorithm}...")
 
+    # STOPS THE ANIMATION, CLEARS THE RELATED STATE
     def stop_animation(self) -> None:
         if self._anim_after_id:
             self.after_cancel(self._anim_after_id)
@@ -491,6 +515,7 @@ class App(tk.Tk):
         self._animating = False
         self._set_status("Animation stopped")
 
+    # EXECUTES AN ANIMATION STEP, UPDATES THE CANVAS, AND SCHEDULES THE NEXT FRAME
     def _animate_step(self) -> None:
         if not self._animating:
             return
@@ -508,7 +533,7 @@ class App(tk.Tk):
         delay = max(self.animation_delay_var.get(), 10)
         self._anim_after_id = self.after(delay, self._animate_step)
 
-    # Save ---------------------------------------------------------------
+    # SAVES A GIF WITH THE CURRENT STATE SEQUENCE AND METADATA
     def save_gif(self) -> None:
         if not self.current_states:
             messagebox.showinfo("No data", "Run an algorithm first.")
@@ -557,7 +582,7 @@ class App(tk.Tk):
         except Exception as exc:
             messagebox.showerror("Error", f"Failed to save GIF: {exc}")
 
-    # Comparison ---------------------------------------------------------
+    # STARTS THE ALGORITHM COMPARISON TASK (BUTTON)
     def on_run_comparison(self) -> None:
         runs = self.comparison_runs_var.get()
         if runs <= 0:
@@ -565,6 +590,7 @@ class App(tk.Tk):
             return
         self._run_async("Comparison", lambda: self._comparison_worker(runs))
 
+    # COMPARISON WORKER: EXECUTES THE COMPARISON AND COLLECTS METADATA
     def _comparison_worker(self, runs: int):
         def fn():
             return compare_hill_climbing_algorithms(
@@ -606,7 +632,7 @@ class App(tk.Tk):
         }
         return board_snapshot, states_snapshot, history_snapshot, metadata
 
-    # Formatting ---------------------------------------------------------
+    # FORMATS THE RESULTS AND METADATA FOR DISPLAY IN THE LOG
     def _format_result(self, label: str, metadata: Dict[str, Any], steps: int) -> str:
         lines = [f"=== {label} ==="]
         lines.append(f"Steps: {steps}")
@@ -642,20 +668,17 @@ class App(tk.Tk):
                 lines.append(f"{key}: {value}")
         return "\n".join(lines) + "\n\n"
 
-
-    # Server handing -----------------------------------------------------
+    # ENSURES THAT THE ANIMATION STOPS WHEN THE APPLICATION IS CLOSED
     def mainloop(self, n: int = 0) -> None:  # type: ignore[override]
         try:
             super().mainloop(n)
         finally:
             self.stop_animation()
 
-
-# Entry point ------------------------------------------------------------
+# ENTRY POINT: CREATES AND EXECUTES THE APPLICATION
 def main() -> None:
     app = App()
     app.mainloop()
-
 
 if __name__ == "__main__":
     main()

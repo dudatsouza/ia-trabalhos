@@ -1,13 +1,15 @@
-from core.eight_queens_representation import EightQueensProblem
-
-from tools.measure_time_memory import measure_time_memory
-
+# IMPORTS EXTERNAL
 import matplotlib.pyplot as plt
 from typing import Dict, List, Optional, Sequence, Tuple
 
+# IMPORTS INTERNAL
+# CORE
+from core.eight_queens_representation import EightQueensProblem
+# TOOLS
+from tools.measure_time_memory import measure_time_memory
 
+# PLOT THE NUMBER OF CONFLICTS OVER ITERATIONS
 def plot_search_history(history: List[int]) -> None:
-    """Plots the number of conflicts over iterations."""
     if not history:
         print("No history to plot.")
         return
@@ -18,19 +20,19 @@ def plot_search_history(history: List[int]) -> None:
     plt.xlabel("Iteration")
     plt.ylabel("Number of Conflicts")
     plt.grid(True)
+    # ADD A HORIZONTAL LINE AT 0 TO REPRESENT THE GOAL
     plt.axhline(y=0, color='r', linestyle='--', label='Goal (0 Conflicts)')
     plt.legend()
     plt.show()
 
-
+# COMPUTE HILL CLIMBING WITH SIDEWAYS MOVES AND PRINT METRICS
 def compute_hill_climbing_with_sideways_moves(
     problem: EightQueensProblem,
     max_sideways_moves: int = 100,
     track_states: bool = True,
     initial_board: Optional[Sequence[int]] = None,
 ):
-    """Executes the sideways hill climbing variant and prints metrics."""
-
+    
     result, elapsed_time, memory_used, current_mem, peak_mem = measure_time_memory(
         hill_climbing_with_sideways_moves,
         problem,
@@ -41,6 +43,7 @@ def compute_hill_climbing_with_sideways_moves(
 
     best_solution, history, states = result
 
+    # PLOT THE SEARCH HISTORY
     plot_search_history(history)
 
     if best_solution:
@@ -83,7 +86,7 @@ def compute_hill_climbing_with_sideways_moves(
         "peak_bytes": peak_mem,
     }
 
-
+# HILL CLIMBING WITH SIDEWAYS MOVES IMPLEMENTATION
 def hill_climbing_with_sideways_moves(
     problem,
     max_sideways_moves: int,

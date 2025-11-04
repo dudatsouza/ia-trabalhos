@@ -1,4 +1,4 @@
-# EXTERNAL IMPORTS
+# IMPORTS EXTERNAL
 import random
 import os, sys, traceback
 from pathlib import Path     
@@ -7,18 +7,20 @@ from pathlib import Path
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, src_path)
 
-# INTERNAL PROJECT IMPORTS
+# IMPORTS INTERNAL
 # CORE
 from core.eight_queens_representation import EightQueensProblem
-
-# GREEDY LOCAL SEARCH
+# LOCAL SEARCH
 from local_search.sideways_moves import compute_hill_climbing_with_sideways_moves, hill_climbing_with_sideways_moves
 from local_search.random_restarts import compute_hill_climbing_with_random_restarts, hill_climbing_with_random_restarts
 from local_search.simulated_annealing import compute_simulated_annealing, simulated_annealing
-
 # COMPARISON
 from comparisons.compare_hill_climbing import compare_hill_climbing_algorithms
-
+# COMPARISONS PLOTTING (OPTIONAL)
+try:
+	from comparisons.hill_climbing_plots import plot_hill_climbing_metrics
+except Exception:  # pragma: no cover - plotting is optional
+	plot_hill_climbing_metrics = None  # type: ignore
 # VISUALIZATION
 from visualization.queen_gif import generate_gif_from_states
 
@@ -68,9 +70,8 @@ def get_option(max_option: int = 6) -> int:
         except ValueError:
             print("Invalid input. Please enter a number.")
 
-# BOARD MANAGEMENT FUNCTION
+# BOARD MANAGEMENT FUNCTION: DISPLAY THE CURRENT BOARD STATE
 def show_current_board(problem):
-    """Display the current board state."""
     board = problem.initial_board()
     conflicts = problem.conflicts(board)
     print(f"\nCurrent board conflicts: {conflicts}")
@@ -88,9 +89,8 @@ def show_current_board(problem):
         print(line)
     print()
 
-# VISUALIZATION FUNCTION
+# VISUALIZATION FUNCTION: GENERATE GIF VISUALIZATION FOR THE ALGORITHM
 def show_visualize_algorithm(algorithm_name: str, states, history, problem):
-    """Generate GIF visualization for the algorithm."""
     try:
         current_file = Path(__file__).resolve()
         repo_root = current_file.parents[2] if 'tools' in str(current_file) else current_file.parents[1]
@@ -116,9 +116,8 @@ def show_visualize_algorithm(algorithm_name: str, states, history, problem):
         tb = traceback.format_exc()
         print(f"*** ERROR generating GIF for {algorithm_name}: {e} ***\n{tb}\n")
 
-# COMPARISON FUNCTION
+# COMPARISON FUNCTION: RUN COMPARISON OF HILL CLIMBING WITH CONFIGURABLE PARAMETERS
 def compare_algorithms(problem):
-    """Run comparison of hill climbing algorithms with configurable parameters."""
     print("\n=== Algorithm Comparison ===")
     print("Configure comparison parameters:")
     
@@ -146,7 +145,7 @@ def compare_algorithms(problem):
             random_max_restarts=random_max_restarts,
             annealing_temperature=annealing_temp,
             annealing_linear_max_steps=annealing_linear_steps,
-            annealing_log_max_steps=annealing_exp_steps,
+            annealing_exp_max_steps=annealing_exp_steps,
         )
         
         print("\n=== COMPARISON RESULTS ===")
@@ -156,15 +155,17 @@ def compare_algorithms(problem):
         current_file = Path(__file__).resolve()
         repo_root = current_file.parents[2] if 'tools' in str(current_file) else current_file.parents[1]
         metrics_path = repo_root / "data" / "output" / "metrics" / "metrics_hill_climbing.json"
+        plot_path = repo_root / "data" / "output" / "graphics" / "hill_climbing"
         print(f"\nDetailed metrics saved to: {metrics_path}")
-        
+        plot_hill_climbing_metrics(metrics, out_dir=plot_path)
+        print(f"\nDetailed graphic saved to: {plot_path}")
+
     except Exception as e:
         tb = traceback.format_exc()
         print(f"*** ERROR during comparison: {e} ***\n{tb}\n")
 
-# PRINT COMPARISON TABLE
+# PRINT COMPARISON TABLE: PRINT A FORMATTED TABLE OF COMPARISON METRICS
 def print_comparison_table(metrics):
-    """Print a formatted table of comparison metrics."""
     if not metrics:
         print("No metrics available.")
         return
@@ -255,8 +256,7 @@ def main():
                     sideways_limit = int(input("Enter the maximum number of sideways moves allowed: "))
                     print(f"Sideways moves limit set to {sideways_limit}.")
                 elif sub_option == 4:
-                    break
-                
+                    break         
             
         elif option == 2:
             allow_sideways = False
@@ -318,7 +318,8 @@ def main():
                     cooling_name = 'linear' if cooling_func == 1 else 'exponential'
                     print(f"Temperature: {temperature}, Cooling: {cooling_name}, Max steps: {max_steps}")
                     print("="*60)
-                    compute_simulated_annealing(problem, temperature, cooling_func, True, max_steps)
+                    compute_simulated_annealing(problem, temperature=400, cooling_func=2, max_steps=100)
+
                     print("="*60)
                 elif sub_option == 2:
                     print("\n" + "="*60)
@@ -367,7 +368,7 @@ def main():
 
         elif option == 5:
             print("Generating new random board...")
-            problem = EightQueensProblem()  # This will generate a new random board
+            problem = EightQueensProblem() 
             show_current_board(problem)
 
         elif option == 6:

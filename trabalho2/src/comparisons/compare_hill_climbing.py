@@ -1,5 +1,5 @@
+# IMPORTS EXTERNAL
 from __future__ import annotations
-
 import json
 import random
 import statistics
@@ -7,19 +7,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
 
+# IMPORTS INTERNAL
+# CORE
 from core.eight_queens_representation import EightQueensProblem
-
+# TOOLS
+from tools.measure_time_memory import measure_time_memory
+# LOCAL SEARCH
 from local_search.random_restarts import hill_climbing_with_random_restarts
 from local_search.sideways_moves import hill_climbing_with_sideways_moves
 from local_search.simulated_annealing import simulated_annealing
-
-from tools.measure_time_memory import measure_time_memory
-
+# COMPARISONS PLOTTING (OPTIONAL)
 try:
 	from comparisons.hill_climbing_plots import plot_hill_climbing_metrics
 except Exception:  # pragma: no cover - plotting is optional
 	plot_hill_climbing_metrics = None  # type: ignore
-
 
 @dataclass
 class RunStats:
@@ -31,13 +32,13 @@ class RunStats:
 	steps: int
 	extra: Dict[str, float]
 
-
+# DEFAULT METRICS DICTIONARY
 def _default_metrics(num_runs: int) -> Dict[str, str]:
 	return {
 		"runs": str(num_runs),
 	}
 
-
+# SUMMARIZE A LIST OF RUN STATS INTO AGGREGATED METRICS
 def _summarize(
 	label: str,
 	stats: List[RunStats],
@@ -54,6 +55,7 @@ def _summarize(
 	steps = [s.steps for s in stats]
 
 	metrics = {
+		f"{label}": "",
 		f"{label} avg time (ms)": f"{statistics.fmean(times):.3f}",
 		f"{label} avg memory (B)": f"{statistics.fmean(rss):.3f}",
 		f"{label} avg peak (KB)": f"{statistics.fmean(peaks) / 1024:.3f}",
@@ -73,12 +75,11 @@ def _summarize(
 
 	for key, values in extras.items():
 		metrics[f"{label} {key}"] = f"{statistics.fmean(values):.3f}"
-
+			
 	return metrics
 
-
+# GENERATE UNIQUE INITIAL BOARDS
 def _generate_unique_boards(num_runs: int, seed: int = 42) -> List[Tuple[int, ...]]:
-	"""Generate a deterministic list of unique initial boards."""
 	rng = random.Random(seed)
 	boards: List[Tuple[int, ...]] = []
 	seen: set[Tuple[int, ...]] = set()
@@ -92,7 +93,7 @@ def _generate_unique_boards(num_runs: int, seed: int = 42) -> List[Tuple[int, ..
 		boards.append(key)
 	return boards
 
-
+# RUNS THE CONFIGURED HILL-CLIMBING VARIANTS AND RETURNS AGGREGATED METRICS
 def compare_hill_climbing_algorithms(
 	*,
 	num_runs: int = 100,
@@ -103,8 +104,7 @@ def compare_hill_climbing_algorithms(
 	annealing_linear_max_steps: int = 1000,
 	annealing_exp_max_steps: int = 1000,
 ) -> Dict[str, str]:
-	"""Runs the configured hill-climbing variants and returns aggregated metrics."""
-
+	
 	metrics: Dict[str, str] = _default_metrics(num_runs)
 	base_boards = _generate_unique_boards(num_runs)
 	seed_offsets = {
@@ -115,7 +115,7 @@ def compare_hill_climbing_algorithms(
 		"anneal_exp": 5_000,
 	}
 
-	# Sideways moves variants -------------------------------------------------
+	# SIDEWAYS MOVES VARIANTS
 	for limit in sideways_limits:
 		sideways_stats: List[RunStats] = []
 		sideways_success = 0
@@ -148,7 +148,7 @@ def compare_hill_climbing_algorithms(
 
 		metrics.update(_summarize(f"Sideways-{limit}", sideways_stats, sideways_success))
 
-	# Random restarts variants -------------------------------------------------
+	# RANDOM RESTARTS VARIANTS
 	for allow_sideways, label in (
 		(True, "RandomRestartsSideways"),
 		(False, "RandomRestartsHill"),
@@ -194,7 +194,7 @@ def compare_hill_climbing_algorithms(
 
 		metrics.update(_summarize(label, restart_stats, restart_success))
 
-	# Simulated annealing variants --------------------------------------------
+	# SIMULATED ANNEALING VARIANTS
 	for cooling, label, max_steps in (
 		(1, "SimulatedAnnealingLinear", annealing_linear_max_steps),
 		(2, "SimulatedAnnealingExponential", annealing_exp_max_steps),

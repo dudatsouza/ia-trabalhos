@@ -1,10 +1,10 @@
+# IMPORTS EXTERNAL
 from __future__ import annotations
-
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
-
 from PIL import Image, ImageDraw, ImageFont
 
+# CONSTANTS FOR RENDERING
 BOARD_SIZE = 8
 LIGHT_COLOR = "#f0d9b5"
 DARK_COLOR = "#b58863"
@@ -16,29 +16,25 @@ QUEEN_FILL = "#1b2631"
 QUEEN_OUTLINE = "#f7f9f9"
 BEST_CANDIDATE_COLOR = "#f5b7b1"
 
-
+# TRIES TO LOAD A READABLE FONT FOR THE QUEENS AND HEADER
 def _load_font(cell_size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    """Tries to load a readable font for the queens and header."""
-
     try:
         return ImageFont.truetype("DejaVuSans-Bold.ttf", int(cell_size * 0.72))
     except Exception:
         return ImageFont.load_default()
 
-
+# TRIES TO LOAD A READABLE FONT FOR THE HEADER
 def _load_header_font(cell_size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     try:
         return ImageFont.truetype("DejaVuSans.ttf", int(cell_size * 0.32))
     except Exception:
         return ImageFont.load_default()
 
-
+# RETURNS THE MOVED QUEEN COORDINATES AS ((ROW, COL) FROM, (ROW, COL) TO)
 def diff_states(
     previous: Sequence[int],
     current: Sequence[int],
 ) -> Tuple[Optional[Tuple[int, int]], Optional[Tuple[int, int]]]:
-    """Returns the moved queen coordinates as ((row, col) from, (row, col) to)."""
-
     moved_from: Optional[Tuple[int, int]] = None
     moved_to: Optional[Tuple[int, int]] = None
 
@@ -50,7 +46,7 @@ def diff_states(
 
     return moved_from, moved_to
 
-
+# RENDERS A CHESS BOARD WITH QUEENS FOR A SPECIFIC STEP
 def board_to_image(
     board: Sequence[int],
     *,
@@ -61,8 +57,6 @@ def board_to_image(
     best_candidates: Optional[Set[Tuple[int, int]]] = None,
     cell_size: int = 80,
 ) -> Image.Image:
-    """Renders a chess board with queens for a specific step."""
-
     n = len(board)
     if n == 0:
         raise ValueError("Board cannot be empty")
@@ -80,7 +74,7 @@ def board_to_image(
     font = _load_font(cell_size)
     header_font = _load_header_font(cell_size)
 
-    # Header text
+    # HEADER TEXT
     header_lines: List[str] = []
     if step_index is not None:
         header_lines.append(f"Step {step_index + 1}")
@@ -96,7 +90,7 @@ def board_to_image(
 
     moved_from, moved_to = highlight if highlight else (None, None)
 
-    # Draw squares
+    # DRAW SQUARES
     for row in range(n):
         for col in range(n):
             base_color = LIGHT_COLOR if (row + col) % 2 == 0 else DARK_COLOR
@@ -128,7 +122,7 @@ def board_to_image(
                     fill="#1c2833",
                 )
 
-    # Draw queens
+    # DRAW QUEENS
     for col, row in enumerate(board):
         x0 = margin + col * cell_size
         y0 = board_top + row * cell_size
@@ -156,7 +150,7 @@ def board_to_image(
 
     return image
 
-
+# CREATES A GIF HIGHLIGHTING QUEEN MOVES ACROSS THE PROVIDED STATES
 def generate_gif_from_states(
     states: Iterable[Sequence[int]],
     out_path: str | Path,
@@ -167,8 +161,6 @@ def generate_gif_from_states(
     duration_ms: int = 300,
     cell_size: int = 80,
 ) -> str:
-    """Creates a GIF highlighting queen moves across the provided states."""
-
     states_list = [list(state) for state in states]
     if not states_list:
         raise ValueError("No states provided for GIF generation")

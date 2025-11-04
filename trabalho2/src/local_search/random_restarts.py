@@ -1,17 +1,19 @@
-from core.eight_queens_representation import EightQueensProblem
-
+# IMPORTS EXTERNAL
 import random
+import matplotlib.pyplot as plt
 from typing import List, Optional, Sequence
 
-import matplotlib.pyplot as plt
-
+# IMPORTS INTERNAL
+# CORE
+from core.eight_queens_representation import EightQueensProblem
+# TOOLS
 from tools.measure_time_memory import measure_time_memory
-
+# LOCAL SEARCH
 from local_search.sideways_moves import hill_climbing_with_sideways_moves
 from local_search.hill_climbing import hill_climbing
 
+# PLOTS THE NUMBER OF CONFLICTS OVER ITERATIONS
 def plot_search_history(history):
-    """Plots the number of conflicts over iterations."""
     if not history:
         print("No history to plot.")
         return
@@ -22,11 +24,12 @@ def plot_search_history(history):
     plt.xlabel("Iteration")
     plt.ylabel("Number of Conflicts")
     plt.grid(True)
-    # Add a horizontal line at 0 to represent the goal
+    # ADD A HORIZONTAL LINE AT 0 TO REPRESENT THE GOAL
     plt.axhline(y=0, color='r', linestyle='--', label='Goal (0 Conflicts)')
     plt.legend()
     plt.show()
 
+# COMPUTES HILL CLIMBING WITH RANDOM RESTARTS AND PRINTS METRICS
 def compute_hill_climbing_with_random_restarts(
     problem: EightQueensProblem,
     allow_sideways: bool = False,
@@ -36,6 +39,7 @@ def compute_hill_climbing_with_random_restarts(
     initial_board: Optional[Sequence[int]] = None,
     rng: Optional[random.Random] = None,
 ):
+    
     # CALL THE HILL CLIMBING WITH RANDOM RESTARTS AND MEASURE TIME/MEMORY
     result, elapsed_time, memory_used, current, peak = measure_time_memory(
         hill_climbing_with_random_restarts,
@@ -50,6 +54,7 @@ def compute_hill_climbing_with_random_restarts(
 
     best_solution, best_fitness, restart_count, history, states = result
 
+    # PLOT THE SEARCH HISTORY
     plot_search_history(history)
 
     if best_solution:
@@ -100,7 +105,7 @@ def compute_hill_climbing_with_random_restarts(
         "peak_bytes": peak,
     }
 
-
+# HILL CLIMBING WITH RANDOM RESTARTS IMPLEMENTATION
 def hill_climbing_with_random_restarts(
     problem,
     allow_sideways: bool = False,

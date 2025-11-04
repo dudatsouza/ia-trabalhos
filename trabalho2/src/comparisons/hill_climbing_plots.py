@@ -1,10 +1,11 @@
+# IMPORTS EXTERNAL
 from __future__ import annotations
-
 from pathlib import Path
 from typing import Dict, Iterable, Tuple
-
 import matplotlib.pyplot as plt
+import numpy as np
 
+# DEFAULT ALGORITHM MAP FOR PLOTTING
 DEFAULT_ALG_MAP: Tuple[Tuple[str, str], ...] = (
     ("Sideways (10)", "Sideways-10"),
     ("Sideways (100)", "Sideways-100"),
@@ -14,12 +15,12 @@ DEFAULT_ALG_MAP: Tuple[Tuple[str, str], ...] = (
     ("SA Exp", "SimulatedAnnealingExponential"),
 )
 
-
+# ENSURE DIRECTORY EXISTS
 def _ensure_dir(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
     return path
 
-
+# PARSE SUCCESS RATIO FROM STRING
 def _parse_success(value: str) -> float:
     try:
         succeeded, total = value.split("/")
@@ -27,7 +28,9 @@ def _parse_success(value: str) -> float:
     except Exception:
         return 0.0
 
-
+# -------------------------------
+# FUNÇÃO PRINCIPAL
+# -------------------------------
 def plot_hill_climbing_metrics(
     metrics: Dict[str, str],
     *,
@@ -39,42 +42,103 @@ def plot_hill_climbing_metrics(
         out_dir = repo_root / "data" / "output" / "graphics" / "hill_climbing"
     _ensure_dir(out_dir)
 
+    # ----- GERAL -----
     labels = [label for label, _ in algorithms]
 
-    times = [float(metrics.get(f"{key} avg time (ms)", 0.0)) for _, key in algorithms]
-    conflicts = [float(metrics.get(f"{key} avg conflicts", 0.0)) for _, key in algorithms]
-    success_rates = [
-        _parse_success(metrics.get(f"{key} success count", "0/1")) for _, key in algorithms
-    ]
-    steps = [float(metrics.get(f"{key} avg steps", 0.0)) for _, key in algorithms]
+    data = {
+        "Average time (ms)": [float(metrics.get(f"{key} avg time (ms)", 0.0)) for _, key in algorithms],
+        # "Average memory (B)": [float(metrics.get(f"{key} avg memory (B)", 0.0)) for _, key in algorithms],
+        "Average peak (KB)": [float(metrics.get(f"{key} avg peak (KB)", 0.0)) for _, key in algorithms],
+        "Average current (KB)": [float(metrics.get(f"{key} avg current (KB)", 0.0)) for _, key in algorithms],
+        "Average conflicts": [float(metrics.get(f"{key} avg conflicts", 0.0)) for _, key in algorithms],
+        "Average steps": [float(metrics.get(f"{key} avg steps", 0.0)) for _, key in algorithms],
+        "Success rate": [_parse_success(metrics.get(f"{key} success count", "0/1")) for _, key in algorithms],
+    }
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 9))
+    fig, axes = plt.subplots(3, 2, figsize=(14, 14))
     axes = axes.flatten()
 
-    axes[0].bar(labels, times, color="#3498db")
-    axes[0].set_title("Average time (ms)")
-    axes[0].set_ylabel("ms")
-    axes[0].tick_params(axis="x", rotation=20)
+    for i, (title, values) in enumerate(data.items()):
+        axes[i].bar(labels, values, color="#3498db")
+        axes[i].set_title(title)
+        axes[i].tick_params(axis="x", rotation=20)
+        if "rate" in title.lower():
+            axes[i].set_ylim(0, 1)
 
-    axes[1].bar(labels, conflicts, color="#e67e22")
-    axes[1].set_title("Average conflicts")
-    axes[1].set_ylabel("Conflicts")
-    axes[1].tick_params(axis="x", rotation=20)
-
-    axes[2].bar(labels, success_rates, color="#27ae60")
-    axes[2].set_title("Success rate")
-    axes[2].set_ylabel("Ratio")
-    axes[2].set_ylim(0, 1)
-    axes[2].tick_params(axis="x", rotation=20)
-
-    axes[3].bar(labels, steps, color="#9b59b6")
-    axes[3].set_title("Average steps")
-    axes[3].set_ylabel("Iterations")
-    axes[3].tick_params(axis="x", rotation=20)
-
+    fig.suptitle("General Metrics — Hill Climbing Algorithms", fontsize=14, fontweight="bold")
     fig.tight_layout()
-    fig.savefig(out_dir / "hill_climbing_metrics.png", dpi=160)
+    fig.savefig(out_dir / "general_metrics.png", dpi=160)
     plt.close(fig)
+
+    # ----- COMPARAÇÕES -----
+    comparisons = [
+        ("Sideways-10", "Sideways-100", "Sideways-Comparison", [
+            "avg time (ms)", 
+            # "avg memory (B)", 
+            "avg peak (KB)", 
+            "avg current (KB)",
+            "avg conflicts", 
+            # "best conflicts", 
+            # "worst conflicts", 
+            "avg steps", 
+            "success count"
+        ]),
+        ("RandomRestartsSideways", "RandomRestartsHill", "Restarts-Comparison", [
+            "avg time (ms)", 
+            # "avg memory (B)", 
+            "avg peak (KB)", 
+            "avg current (KB)",
+            # "avg conflicts", 
+            # "best conflicts", 
+            # "worst conflicts", 
+            "avg steps", 
+            "success count",
+            "avg restarts", 
+            "max moves", 
+            "sideways flag"
+        ]),
+        ("SimulatedAnnealingLinear", "SimulatedAnnealingExponential", "SA-Comparison", [
+            "avg time (ms)", 
+            # "avg memory (B)", 
+            "avg peak (KB)", 
+            "avg current (KB)",
+            # "avg conflicts", 
+            # "best conflicts", 
+            # "worst conflicts", 
+            "avg steps", 
+            "success count",
+            "temperature", 
+            "max steps"
+        ]),
+    ]
+
+    for algo1, algo2, fname, fields in comparisons:
+        metrics1, metrics2 = [], []
+        for field in fields:
+            v1 = metrics.get(f"{algo1} {field}", "0")
+            v2 = metrics.get(f"{algo2} {field}", "0")
+            if "success" in field:
+                metrics1.append(_parse_success(v1))
+                metrics2.append(_parse_success(v2))
+            else:
+                metrics1.append(float(v1))
+                metrics2.append(float(v2))
+
+        x = np.arange(len(fields))
+        width = 0.35
+
+        fig, ax = plt.subplots(figsize=(14, 7))
+        ax.bar(x - width/2, metrics1, width, label=algo1, color="#3498db")
+        ax.bar(x + width/2, metrics2, width, label=algo2, color="#e67e22")
+
+        ax.set_title(f"{algo1} vs {algo2}", fontsize=13, fontweight="bold")
+        ax.set_xticks(x)
+        ax.set_xticklabels(fields, rotation=25, ha="right")
+        ax.legend()
+        ax.grid(axis="y", linestyle="--", alpha=0.5)
+        fig.tight_layout()
+        fig.savefig(out_dir / f"{fname}.png", dpi=160)
+        plt.close(fig)
 
 
 __all__ = ["plot_hill_climbing_metrics"]

@@ -1,15 +1,15 @@
+# IMPORTS EXTERNAL
 import math
 import random
 from typing import List, Optional, Sequence
-
-from core.eight_queens_representation import EightQueensProblem
-
-from tools.measure_time_memory import measure_time_memory
-
 import matplotlib.pyplot as plt
 
-def plot_search_history(history):
-    """Plots the number of conflicts over iterations."""
+# IMPORTS INTERNAL
+from core.eight_queens_representation import EightQueensProblem
+from tools.measure_time_memory import measure_time_memory
+
+# PLOT FUNCTION
+def plot_search_history(history: List[int]) -> None:
     if not history:
         print("No history to plot.")
         return
@@ -20,11 +20,12 @@ def plot_search_history(history):
     plt.xlabel("Iteration")
     plt.ylabel("Number of Conflicts")
     plt.grid(True)
-    # Add a horizontal line at 0 to represent the goal
+    # ADD A HORIZONTAL LINE AT 0 TO REPRESEN THE GOAL
     plt.axhline(y=0, color='r', linestyle='--', label='Goal (0 Conflicts)')
     plt.legend()
     plt.show()
 
+# MAIN EXECUTION FUNCTION
 def compute_simulated_annealing(
     problem: EightQueensProblem,
     temperature: int = 400,
@@ -97,6 +98,7 @@ def compute_simulated_annealing(
     }
 
 
+# SIMULATED ANNEALING
 def simulated_annealing(
     problem,
     temperature,
@@ -138,7 +140,7 @@ def simulated_annealing(
 
     return current, problem.fitness(current), history, states if track_states else None
 
-
+# TEMPERATURE SCHEDULE
 def schedule(t, cooling_func, initial_temp=400, max_steps=1000):
     # print( f"Scheduling at time {t} with cooling function {cooling_func} and initial temp {initial_temp}" )
     if cooling_func == 1:

@@ -1,9 +1,7 @@
 from typing import List, Optional, Sequence
 
-
+# CLASSICAL HILL CLIMBING THAT RECORDS VISITED BOARDS
 def hill_climbing(problem, track_states: bool = False, initial_board: Optional[Sequence[int]] = None):
-    """Classical hill climbing that optionally records visited boards."""
-
     current = list(initial_board) if initial_board is not None else problem.initial_board()
     history: List[int] = [problem.conflicts(current)]
     states: Optional[List[List[int]]] = [current.copy()] if track_states else None
