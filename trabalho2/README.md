@@ -34,22 +34,52 @@ O relatório do trabalho está disponível em `trabalho2/relatorio.pdf`.
 De forma organizada, os arquivos e diretórios do trabalho2 seguem a estrutura abaixo:
 
 ```
-trabalho2/
-├── pyproject.toml
-├── README.md
-├── relatorio.pdf
-├── data/
-│   └── output/
-│       ├── graphics/
-│       │   └── hill_climbing/
-│       └── metrics/
-│           └── metrics_hill_climbing.json
-└── src/
-    ├── core/                 # representação do problema (8 rainhas)
-    ├── local_search/         # hill_climbing, sideways_moves, random_restarts, simulated_annealing
-    ├── comparisons/          # compare_hill_climbing.py, hill_climbing_plots.py
-    ├── tools/                # main.py (CLI), run_gui.py (GUI), measure_time_memory.py
-    └── visualization/        # geração de GIFs (queen_gif.py)
+ia-trabalhos/
+└── trabalho2/
+    ├── data/
+    │   └── output/
+    │       ├── graphics/
+    │       │   ├── comparisons/
+    │       │   │   ├── Restarts-Comparison.png
+    │       │   │   ├── SA-Comparison.png
+    │       │   │   └── Sideways-Comparison.png
+    │       │   ├── general/
+    │       │   │   ├── general_average_conflicts.png
+    │       │   │   ├── general_average_current_kb.png
+    │       │   │   └── ... (e outros .png)
+    │       │   └── progress/
+    │       │       ├── progress-random-hill.png
+    │       │       ├── progress-random-sideways.png
+    │       │       └── ... (e outros .png)
+    │       ├── metrics/
+    │       │   └── metrics_hill_climbing.json
+    │       └── visualization/
+    │           ├── visualization-hill_climbing_random_restarts-hill.gif
+    │           ├── visualization-hill_climbing_random_restarts-sideways.gif
+    │           └── ... (e outros .gif)
+    ├── src/
+    │   ├── comparisons/
+    │   │   ├── compare_hill_climbing.py
+    │   │   └── hill_climbing_plots.py
+    │   ├── core/
+    │   │   └── eight_queens_representation.py
+    │   ├── local_search/
+    │   │   ├── hill_climbing.py
+    │   │   ├── random_restarts.py
+    │   │   ├── sideways_moves.py
+    │   │   └── simulated_annealing.py
+    │   ├── tools/
+    │   │   ├── main.py
+    │   │   ├── measure_time_memory.py
+    │   │   └── run_gui.py
+    │   └── visualization/
+    │       └── queen_gif.py
+    ├── .gitignore
+    ├── poetry.lock
+    ├── pyproject.toml
+    ├── README.md
+    ├── relatorio.pdf
+    └── requirements.txt
 ```
 
 ## Instalando
